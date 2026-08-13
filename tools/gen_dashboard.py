@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
-"""Generate (and optionally push) the "Temperatures" dashboard.
+"""Set up / update the "Area Temperatures" dashboard.
 
-Builds a storage-mode dashboard with one section per area that has an
-Area Averages temperature sensor: a status panel listing all issues, a
-full-width average tile per room, a tile per member sensor, and a second
-view with 24 h history graphs.
+Default (--push) wires the dashboard to the **custom strategy**
+(www/area_averages_strategy.js): registers the /local/ resource with a
+content-hash version (bump-on-change), makes sure the dashboard and the
+exclude label exist, and saves the two-line strategy config. The strategy
+then regenerates every section live on each dashboard load — new sensors,
+new areas, exclusions, offline-hiding. Ship the JS first via ../deploy.sh.
+
+`--push-static` pushes the old generated snapshot instead (emergency
+fallback if the strategy JS misbehaves; no offline-hiding, goes stale).
 
 Usage:
-  python3 gen_dashboard.py            # print the lovelace JSON
-  python3 gen_dashboard.py --push     # create/update the dashboard in HA
+  python3 gen_dashboard.py            # print the static lovelace JSON
+  python3 gen_dashboard.py --push     # strategy mode (the normal path)
+  python3 gen_dashboard.py --push-static
 
-Needs `websockets` for --push. Token comes from ~/.config/ha-token.
+Needs `websockets` for pushing. Token comes from ~/.config/ha-token.
 """
 
 from __future__ import annotations
@@ -179,7 +185,21 @@ def build_config(rooms):
     }
 
 
-async def push(config):
+STRATEGY_JS = pathlib.Path(__file__).resolve().parent.parent / "www" / "area_averages_strategy.js"
+
+
+def strategy_config():
+    return {"strategy": {"type": "custom:area-temperatures", "history_hours": 24}}
+
+
+def resource_url():
+    import hashlib
+
+    digest = hashlib.sha1(STRATEGY_JS.read_bytes()).hexdigest()[:8]
+    return f"/local/area_averages_strategy.js?v={digest}"
+
+
+async def push(config, ensure_resource=False):
     import websockets
 
     ctx = ssl.create_default_context()
@@ -202,6 +222,34 @@ async def push(config):
         await ws.send(json.dumps({"type": "auth", "access_token": TOKEN}))
         if json.loads(await ws.recv()).get("type") != "auth_ok":
             raise SystemExit("websocket auth failed")
+
+        if ensure_resource:
+            # Register/refresh the strategy module resource (hash-versioned
+            # URL busts the browser cache on every JS change).
+            url = resource_url()
+            resources = await call({"type": "lovelace/resources"})
+            mine = [
+                r
+                for r in resources.get("result", [])
+                if "area_averages_strategy.js" in r.get("url", "")
+            ]
+            if not mine:
+                created = await call(
+                    {"type": "lovelace/resources/create", "res_type": "module", "url": url}
+                )
+                print("resource created:", created["success"], url)
+            elif mine[0]["url"] != url:
+                updated = await call(
+                    {
+                        "type": "lovelace/resources/update",
+                        "resource_id": mine[0]["id"],
+                        "res_type": "module",
+                        "url": url,
+                    }
+                )
+                print("resource updated:", updated["success"], url)
+            else:
+                print("resource up to date:", url)
 
         # Exclude label: create only if missing.
         labels = await call({"type": "config/label_registry/list"})
@@ -249,13 +297,15 @@ async def push(config):
 
 
 def main():
-    rooms = fetch_rooms()
-    config = build_config(rooms)
     if "--push" in sys.argv:
-        asyncio.run(push(config))
-        print(f"{BASE}/{DASHBOARD_URL_PATH}  ({len(rooms)} rooms)")
+        asyncio.run(push(strategy_config(), ensure_resource=True))
+        print(f"{BASE}/{DASHBOARD_URL_PATH}  (strategy mode — sections regenerate on load)")
+    elif "--push-static" in sys.argv:
+        rooms = fetch_rooms()
+        asyncio.run(push(build_config(rooms)))
+        print(f"{BASE}/{DASHBOARD_URL_PATH}  ({len(rooms)} rooms, static snapshot)")
     else:
-        print(json.dumps(config, indent=2))
+        print(json.dumps(build_config(fetch_rooms()), indent=2))
 
 
 if __name__ == "__main__":

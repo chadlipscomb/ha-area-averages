@@ -58,12 +58,26 @@ needs unit conversion).
   - `sensor.py` — `AreaAveragesManager` (registry watching, membership) +
     `AreaAverageSensor` (mean, issue detection, restore-state persistence)
   - `config_flow.py` — zero-question setup + options flow
-- `deploy.sh` — tar → base64 → `the guest agent` → `<config>/custom_components/`; restart HA after.
-- `tools/gen_dashboard.py` — regenerates the **Temperatures** dashboard
-  (`/room-temperatures`) from live state: status/issues panel, one section
-  per room (average tile + member tiles + greyed excluded tiles), 24 h
-  history view. `--push` saves it via the websocket API. Re-run after adding
-  areas. Needs `pip install websockets`.
+- `www/area_averages_strategy.js` — **custom dashboard strategy** (no HACS).
+  The dashboard config is just `{"strategy": {"type": "custom:area-temperatures"}}`;
+  the JS regenerates every view/section from live state on each dashboard
+  load, so new sensors, new areas and label changes appear without any
+  regeneration step. Per room: status/issues panel, average tile, member
+  tiles, greyed excluded tiles. Members that are `unavailable`/`unknown`
+  hide themselves (native `visibility` conditions, live) and an
+  **"Offline sensors"** toggle tile appears only in rooms hiding something —
+  it flips `input_boolean.show_offline_sensors` to reveal them everywhere.
+  Second view: 24 h history graphs. **Do not "take control"** of the
+  dashboard in the UI editor — that freezes it into a static snapshot.
+- `deploy.sh` — tar → base64 → `the guest agent` → ships
+  `custom_components/` **and** `www/` to `<config>/`;
+  restart HA only for integration changes (JS needs none).
+- `tools/gen_dashboard.py --push` — registers/refreshes the strategy
+  resource (`/local/area_averages_strategy.js?v=<content-hash>`, so browser
+  caches bust on change) and saves the strategy dashboard config. After
+  editing the JS: `./deploy.sh` then `--push`. `--push-static` pushes the
+  old generated snapshot as an emergency no-JS fallback (always-visible
+  tiles, goes stale). Needs `pip install websockets`.
 - `tools/ha_ws.py` — generic HA websocket one-shot (JSON list in, results out).
 
 ## Notes / quirks
@@ -76,4 +90,6 @@ needs unit conversion).
   and plant/soil sensors sit in room averages — label anything unwanted
   with `exclude-average`.
 - `sensor.altai_bed_target_temperature` + `sensor.altai_nozzle_target_temperature`
-  carry the label since 2026-08-12 (setpoints, not temperatures).
+  carry the label since 2026-08-12 (setpoints, not temperatures), as do the
+  three `sensor.sensorbox_*_temperature` (documented 5–8 °F high) and
+  `sensor.fridge_t` (fridge cabinet ≠ Kitchen room air).
