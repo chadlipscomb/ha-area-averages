@@ -378,34 +378,47 @@ function assertAll(label, config, hass, mode) {
   if (mode.custom) {
     for (const avg of avgIds) {
       const areaId = areaIdOf(hass, avg);
+      // Sparklines are off by default, so the hero is a bare mushroom card;
+      // with sparklines on it is wrapped in a stack with the graph under it.
       const stack = roomCards.find(
         (c) => c.type === "custom:stack-in-card" && c.cards[0].entity === avg
       );
-      check(say(`${areaId} hero is a stack-in-card`), Boolean(stack));
-      const hero = stack.cards[0];
-      const graph = stack.cards[1];
+      const bare = roomCards.find(
+        (c) => c.type === "custom:mushroom-template-card" && c.entity === avg
+      );
+      check(say(`${areaId} has exactly one hero`), Boolean(stack) !== Boolean(bare));
+      const hero = stack ? stack.cards[0] : bare;
+      const graph = stack ? stack.cards[1] : undefined;
+      check(
+        say(`${areaId} hero is not full-bleed`),
+        (stack || bare).grid_options?.columns === 6,
+        `${JSON.stringify((stack || bare).grid_options)}`
+      );
       check(say(`${areaId} hero is a mushroom template card`), hero.type === "custom:mushroom-template-card");
       check(say(`${areaId} hero names the area`), typeof hero.primary === "string" && hero.primary.length > 0);
       check(say(`${areaId} hero secondary is a template`), hero.secondary.includes("{%"));
       check(say(`${areaId} hero secondary rebuilds summary when absent`), hero.secondary.includes("sensors'"));
-      check(say(`${areaId} graph is a mini-graph-card`), graph.type === "custom:mini-graph-card");
-      check(say(`${areaId} graph hides its chrome`), graph.show.name === false && graph.show.state === false);
-
-      const thresholds = (graph.color_thresholds || []).map((t) => t.value);
-      if (areaId === "fridge") {
+      if (graph) {
+        check(say(`${areaId} graph is a mini-graph-card`), graph.type === "custom:mini-graph-card");
+        check(say(`${areaId} graph hides its chrome`), graph.show.name === false && graph.show.state === false);
+        // Default sparklines are one quiet colour; the threshold ladder is
+        // opt-in, because eleven of them all land in amber/red at once.
         check(
-          say("fridge uses the fridge ladder"),
-          JSON.stringify(thresholds) === JSON.stringify([0, 45, 50]),
-          thresholds.join(",")
+          say(`${areaId} sparkline is not threshold-coloured by default`),
+          !graph.color_thresholds && typeof graph.line_color === "string"
         );
+      }
+
+      const thresholds = [];
+      if (areaId === "fridge") {
         check(say("fridge badge is not fire"), hero.badge_icon.includes("mdi:alert-circle"));
         check(say("fridge badge trips above 50"), hero.badge_icon.includes("> 50"));
         check(say("fridge ladder has no 68"), !hero.icon_color.includes("< 68"));
       } else if (!["3d_printer", "bench", "outside", "weather"].includes(areaId)) {
         check(
           say(`${areaId} uses the comfort ladder`),
-          JSON.stringify(thresholds) === JSON.stringify([0, 65, 68, 78, 84]),
-          thresholds.join(",")
+          BAND_COLORS.every((c) => hero.icon_color.includes(c)),
+          hero.icon_color.slice(0, 80)
         );
         for (const fragment of ["< 65", "< 68", "< 78", "<= 84", "disabled"]) {
           check(
@@ -415,7 +428,7 @@ function assertAll(label, config, hass, mode) {
         }
         check(say(`${areaId} badge is mdi:fire above 84`), hero.badge_icon.includes("mdi:fire") && hero.badge_icon.includes("> 84"));
         check(say(`${areaId} badge is red`), hero.badge_color === "red");
-      } else {
+      } else if (graph) {
         check(say(`${areaId} has no thresholds`), graph.color_thresholds === undefined);
       }
     }
@@ -914,15 +927,32 @@ async function capabilityChecks(hass) {
       );
       const topLevel = rooms.sections.flatMap((s) => s.cards).filter((c) => c.type !== "heading");
       check(
-        `caps(${combo.label}): every hero fills its column`,
-        topLevel.every((c) => c.type === "markdown" || c.grid_options?.columns === "full")
+        `caps(${combo.label}): heroes are half-width, not full-bleed`,
+        topLevel.every(
+          (c) => c.type === "markdown" || c.grid_options?.columns === 6
+        )
       );
-      const graphs = cards.filter((c) => c.type === "custom:mini-graph-card");
+      // Sparklines are opt-in: the default overview carries none at all.
+      check(
+        `caps(${combo.label}): no sparklines by default`,
+        cards.filter((c) => c.type === "custom:mini-graph-card").length === 0
+      );
+      check(
+        `caps(${combo.label}): no stacking by default`,
+        cards.filter((c) => c.type === "custom:stack-in-card").length === 0
+      );
+      // ...and when asked for, they still follow the available cards.
+      const withSpark = await Strategy.generate(
+        { probe_timeout_ms: 5, sparklines: true },
+        hass
+      );
+      const sparkCards = allCards(withSpark.views.find((v) => v.path === "rooms"));
+      const graphs = sparkCards.filter((c) => c.type === "custom:mini-graph-card");
       check(
         `caps(${combo.label}): sparkline follows mini-graph-card`,
         combo.defined.includes("mini-graph-card") ? graphs.length > 0 : graphs.length === 0
       );
-      const stacks = cards.filter((c) => c.type === "custom:stack-in-card");
+      const stacks = sparkCards.filter((c) => c.type === "custom:stack-in-card");
       check(
         `caps(${combo.label}): stacking follows stack-in-card`,
         combo.defined.includes("stack-in-card") && combo.defined.includes("mini-graph-card")

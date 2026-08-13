@@ -110,6 +110,7 @@ function readOptions(config) {
   const cards =
     raw.cards === "native" || raw.cards === "mushroom" ? raw.cards : "auto";
   const timeout = Number(raw.probe_timeout_ms);
+  const heroColumns = Number(raw.hero_columns);
   return {
     hours: Number(raw.history_hours) > 0 ? Number(raw.history_hours) : 24,
     statsDays: Number(raw.stats_days) > 0 ? Number(raw.stats_days) : 7,
@@ -117,6 +118,23 @@ function readOptions(config) {
     probeTimeout: Number.isFinite(timeout) && timeout >= 0 ? timeout : PROBE_TIMEOUT,
     areas: raw.areas && typeof raw.areas === "object" ? raw.areas : {},
     dashboard: raw.dashboard_path || currentDashboardPath(),
+    // Overview density. Sparklines are OFF by default: eleven full-width
+    // 56px graphs read as a wall of long coloured lines rather than as
+    // sparklines, and the per-room views already carry real history.
+    sparklines: raw.sparklines === true,
+    // Threshold-coloured sparklines only on request — with the house sitting
+    // at 80-85 °F the whole ladder lands in amber/red, so every line comes
+    // out the same alarming colour and the colour stops meaning anything.
+    sparklineThresholds: raw.sparkline_thresholds === true,
+    // 12 = full row of its section. Half-width by default so the heroes tile
+    // two-up instead of stacking eleven full-bleed rows.
+    heroColumns:
+      Number.isFinite(heroColumns) && heroColumns >= 3 && heroColumns <= 12
+        ? heroColumns
+        : 6,
+    // "compact" keeps the secondary to value + coverage so it fits a
+    // half-width card; "full" adds the min-max range and the trend arrow.
+    detail: raw.detail === "full" ? "full" : "compact",
   };
 }
 
@@ -389,7 +407,7 @@ function roomNavigation(room, opts) {
 /* Live coverage line: "83.7 °F · 2 of 9 sensors · 80.6–85.8 · ↑ rising".
  * The summary attribute is preferred, but the same phrase is rebuilt in Jinja
  * when an older integration build does not publish it. */
-function heroSecondary(room) {
+function heroSecondary(room, detail) {
   const e = room.avg;
   return (
     `{% set s = states('${e}') %}` +
@@ -404,13 +422,18 @@ function heroSecondary(room) {
     `{% else %}{% set sm = mc ~ ' sensors' %}{% endif %}{% endif %}` +
     `{% if s in ['unavailable', 'unknown'] %}no data · {{ sm }}` +
     `{% else %}{{ s | float(0) | round(1) }} {{ u }} · {{ sm }}` +
-    `{% set mn = state_attr('${e}', 'minimum') %}` +
-    `{% set mx = state_attr('${e}', 'maximum') %}` +
-    `{% if mc > 2 and mn is not none and mx is not none %}` +
-    ` · {{ mn | round(1) }}–{{ mx | round(1) }}{% endif %}` +
-    `{% set tr = state_attr('${e}', 'trend') %}` +
-    `{% if tr == 'rising' %} · ↑ rising` +
-    `{% elif tr == 'falling' %} · ↓ falling{% endif %}` +
+    // The range and the trend arrow are real information but they push the
+    // secondary past what a half-width card can show, and it truncates
+    // mid-number. They live on the room's own view; opt in with detail: full.
+    (detail === "full"
+      ? `{% set mn = state_attr('${e}', 'minimum') %}` +
+        `{% set mx = state_attr('${e}', 'maximum') %}` +
+        `{% if mc > 2 and mn is not none and mx is not none %}` +
+        ` · {{ mn | round(1) }}–{{ mx | round(1) }}{% endif %}` +
+        `{% set tr = state_attr('${e}', 'trend') %}` +
+        `{% if tr == 'rising' %} · ↑ rising` +
+        `{% elif tr == 'falling' %} · ↓ falling{% endif %}`
+      : "") +
     `{% endif %}`
   );
 }
@@ -423,7 +446,7 @@ function mushroomHero(room, ctx) {
     type: "custom:mushroom-template-card",
     entity: room.avg,
     primary: room.area,
-    secondary: heroSecondary(room),
+    secondary: heroSecondary(room, ctx.opts.detail),
     icon: room.icon,
     tap_action: roomNavigation(room, ctx.opts),
     hold_action: { action: "more-info" },
@@ -458,9 +481,13 @@ function miniGraph(room, ctx) {
     min_bound_range: 8,
     card_mod: { style: "ha-card { margin-top: -8px; }" },
   };
-  if (thresholds) {
+  if (thresholds && ctx.opts.sparklineThresholds) {
     card.color_thresholds = thresholds;
     card.color_thresholds_transition = "smooth";
+  } else {
+    // One quiet line. The hero's icon already carries the band colour, and
+    // repeating it across every sparkline just fills the page with red.
+    card.line_color = "var(--secondary-text-color)";
   }
   return card;
 }
@@ -476,7 +503,7 @@ function nativeHero(room, ctx) {
     name: room.area,
     icon: room.icon,
     state_content: room.hasSummary ? ["state", "summary"] : ["state"],
-    grid_options: { columns: "full" },
+    grid_options: { columns: ctx.opts.heroColumns },
     tap_action: roomNavigation(room, ctx.opts),
     hold_action: { action: "more-info" },
   };
@@ -495,20 +522,23 @@ function nativeHero(room, ctx) {
 }
 
 function heroCards(room, ctx) {
+  const grid = { columns: ctx.opts.heroColumns };
   if (!ctx.caps.has("mushroom-template-card")) return nativeHero(room, ctx);
   const stack = [mushroomHero(room, ctx)];
-  if (ctx.caps.has("mini-graph-card")) stack.push(miniGraph(room, ctx));
+  if (ctx.opts.sparklines && ctx.caps.has("mini-graph-card")) {
+    stack.push(miniGraph(room, ctx));
+  }
   if (stack.length > 1 && ctx.caps.has("stack-in-card")) {
     return [
       {
         type: "custom:stack-in-card",
         mode: "vertical",
-        grid_options: { columns: "full" },
+        grid_options: grid,
         cards: stack,
       },
     ];
   }
-  return stack.map((card) => ({ ...card, grid_options: { columns: "full" } }));
+  return stack.map((card) => ({ ...card, grid_options: grid }));
 }
 
 /* ---------------------------------------------------------- member tiles */
@@ -944,7 +974,7 @@ function trendsView(rooms, ctx) {
         days_to_show: ctx.opts.statsDays,
         chart_type: "line",
         hide_legend: true,
-        grid_options: { columns: "full" },
+        grid_options: { columns: 6 },
       },
     ])
   );

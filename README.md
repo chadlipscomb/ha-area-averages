@@ -132,9 +132,33 @@ conditions. Both are generated from a single `BANDS` table.
 1500 ms timeout. If they are missing the dashboard falls back to core cards,
 still correctly coloured and complete.
 
-Strategy options (all optional): `history_hours` (24), `stats_days` (7),
-`cards` (`auto` | `mushroom` | `native`), `probe_timeout_ms` (1500),
-`dashboard_path`, and `areas` — `{"<area_id>": {"group": "inside|outdoors|equipment", "band": "default|fridge|none"}}`
+### Density
+
+The overview is deliberately quiet. Eleven full-width cards each carrying a
+threshold-coloured 56 px sparkline read as a wall of long red lines — the
+colour ladder tops out at 84 °F and this house sits at 80–85 °F, so nearly
+every line landed in the red end at once and the colour stopped meaning
+anything. So by default:
+
+- heroes are **half-width** (`columns: 6`), tiling two-up instead of stacking
+  eleven full-bleed rows,
+- the overview carries **no graphs at all** — history lives on each room's own
+  view and on Trends,
+- the hero secondary is **value + coverage** only (`82.6 °F · 4 of 6 sensors`);
+  the min–max range and trend arrow would truncate at half width.
+
+Turn any of it back on per taste:
+
+| Option | Default | Effect |
+|---|---|---|
+| `sparklines` | `false` | `true` puts the 56 px mini-graph back under each hero |
+| `sparkline_thresholds` | `false` | `true` restores the 65/68/78/84 colour ladder on those sparklines; otherwise they are one quiet line |
+| `hero_columns` | `6` | 12 = full width, 4 = three-up, 3 = four-up |
+| `detail` | `"compact"` | `"full"` adds ` · 77.9–84.9 · ↓ falling` to the secondary |
+
+Other options: `history_hours` (24), `stats_days` (7), `cards`
+(`auto` | `mushroom` | `native`), `probe_timeout_ms` (1500), `dashboard_path`,
+and `areas` — `{"<area_id>": {"group": "inside|outdoors|equipment", "band": "default|fridge|none"}}`
 to override the built-in grouping.
 
 **Do not "take control"** of the dashboard in the UI editor — that freezes the
@@ -162,7 +186,7 @@ current snapshot into a static config and the strategy stops running.
   - `test_strategy.mjs` — runs the real strategy under node against the
     fixture with a `customElements` shim. Four modes (mushroom/native ×
     contract/legacy) plus card-combination and toggle-scenario suites;
-    ~4535 assertions, exit 1 on failure. `--json` also writes
+    ~4376 assertions, exit 1 on failure. `--json` also writes
     `strategy_output.json`.
   - `render_check.mjs` — POSTs every Jinja template the strategy emits to
     `/api/template` and asserts each one compiles. `test_strategy.mjs` only
