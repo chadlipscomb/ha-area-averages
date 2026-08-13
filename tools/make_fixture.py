@@ -45,10 +45,13 @@ BASE = f"https://{HOST}:{PORT}"
 TOKEN = pathlib.Path("~/.config/ha-token").expanduser().read_text().strip()
 OUT = pathlib.Path(__file__).resolve().parent / "fixture.json"
 
-# Both reveal controls: the legacy helper and the switch the integration owns.
+# Every reveal control: the switches the integration owns plus the legacy
+# hand-made helpers the dashboard still falls back to.
 TOGGLES = (
     "switch.area_averages_show_offline",
+    "switch.area_averages_show_sensors",
     "input_boolean.show_offline_sensors",
+    "input_boolean.show_all_sensors",
 )
 
 #: Attributes the frontend contract expects on every average.

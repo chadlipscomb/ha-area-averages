@@ -11,7 +11,7 @@ every card it emits has a core-only equivalent and it degrades to a complete,
 correctly coloured core-only dashboard if those cards are missing.
 
 Config entry created 2026-08-12.
-Integration `0.2.0`, strategy `VERSION 2.0.0`.
+Integration `0.3.0`, strategy `VERSION 3.0.0`.
 
 ## The health model (read this first)
 
@@ -104,121 +104,63 @@ long-term statistics when a unit appeared later.
 `/room-temperatures` ("Area Temperatures"). The saved lovelace config is only:
 
 ```json
-{"strategy": {"type": "custom:area-temperatures", "history_hours": 24}}
+{"strategy": {"type": "custom:area-temperatures"}}
 ```
 
-`www/area_averages_strategy.js` regenerates everything on each load — 13 views:
+`www/area_averages_strategy.js` regenerates everything on each load — two views.
 
-- **Rooms** — a Status card (a real `[!WARNING]` / `[!CAUTION]` alert listing
-  offline, stale and battery rows, or one quiet line when all is well), then
-  three groups: **Inside**, **Outdoors**, **Equipment & Cold**. One hero card
-  per room: name, area icon, temperature on the 65/68/78/84 ladder with a red
-  `mdi:fire` badge above 84, and a secondary that states its own coverage
-  (`83.7 °F · 2 of 9 sensors`). Half-width, no graph — see Density below.
-  No member tiles at all. Fridge is judged on its own 45/50 ladder; 3D Printer,
-  Bench, Outside and Weather carry no comfort semantics.
-- **Trends** — core `statistics-graph` only: one 7-day overview of all room
-  averages, then min/mean/max per room.
-- **11 subviews** at `room-<area_id>` — members (offline ones hidden behind the
-  reveal toggle), excluded members under their own subtitle, and history.
+**Rooms** is a status card, then **one section per area**. Each section is:
 
-**Colour is never computed in JS.** `generate()` runs once per page load, so a
-JS-computed colour would freeze until reload. The mushroom path emits a Jinja
-ladder; the core path emits one tile per band with `numeric_state` visibility
-conditions. Both are generated from a single `BANDS` table.
+| | |
+|---|---|
+| heading | area name + its registry icon |
+| reading | the temperature at 34 px, on the 65/68/78/84 ladder with a red `mdi:fire` badge above 84. Small line underneath states coverage: `4 of 6 sensors` |
+| `[N sensors]` | reveals every member of that average |
+| `[N offline]` | reveals only the dark ones; present only while that room has one |
+| members | tiles, hidden until a button is pressed |
+| excluded | greyed `mdi:sigma-lower` tiles, behind the sensors button |
 
-**Card degradation**: `mushroom-template-card`, `mini-graph-card` and
-`stack-in-card` are probed at load via `customElements.whenDefined` with a
-1500 ms timeout. If they are missing the dashboard falls back to core cards,
-still correctly coloured and complete.
+The temperature is the **primary** line, not the secondary — it is the reason
+the page exists, so nothing else competes with it for size. Fridge is judged on
+its own 45/50 ladder; 3D Printer, Bench, Outside and Weather carry no comfort
+semantics at all.
 
-### Density
+**Trends** is core `statistics-graph` only: a 7-day overview of every room
+average, then min/mean/max per room. All history lives here — the overview
+carries no graphs, because eleven of them made the temperatures unreadable.
 
-The overview is deliberately quiet. Eleven full-width cards each carrying a
-threshold-coloured 56 px sparkline read as a wall of long red lines — the
-colour ladder tops out at 84 °F and this house sits at 80–85 °F, so nearly
-every line landed in the red end at once and the colour stopped meaning
-anything. So by default:
+### Liquid Glass
 
-- heroes are **half-width** (`columns: 6`), tiling two-up instead of stacking
-  eleven full-bleed rows,
-- the overview carries **no graphs at all** — history lives on each room's own
-  view and on Trends,
-- the hero secondary is **value + coverage** only (`82.6 °F · 4 of 6 sensors`);
-  the min–max range and trend arrow would truncate at half width.
+Every card is a translucent, blurred pane lifted off the page by a soft shadow
+and edged with a specular highlight along its top rim
+(`inset 0 1px 0`) — the cue that makes glass read as glass rather than as a
+flat translucent rectangle. Readings sit at 22 px radius, buttons are full
+pills, member tiles are tighter at 16 px, and each pane lifts 1 px on hover.
 
-Turn any of it back on per taste:
+It is defined entirely in `color-mix()` against HA's own theme variables, so
+one definition tracks light and dark without hardcoding a palette — the pane
+borrows `--card-background-color` and thins it, and takes its rim from
+`--primary-text-color`. The harness asserts no six-digit hex ever reaches the
+CSS.
+
+Glass needs **card-mod**, which is probed at load like any other custom card.
+Without it every card renders as an ordinary HA card, same structure, same
+colours — `glass: false` does the same thing deliberately, and the harness
+asserts that turning it off changes styling *only*, never structure.
+
+### Options
 
 | Option | Default | Effect |
 |---|---|---|
-| `sparklines` | `false` | `true` puts the 56 px mini-graph back under each hero |
-| `sparkline_thresholds` | `false` | `true` restores the 65/68/78/84 colour ladder on those sparklines; otherwise they are one quiet line |
-| `hero_columns` | `6` | 12 = full width, 4 = three-up, 3 = four-up |
-| `detail` | `"compact"` | `"full"` adds ` · 77.9–84.9 · ↓ falling` to the secondary |
-
-Other options: `history_hours` (24), `stats_days` (7), `cards`
-(`auto` | `mushroom` | `native`), `probe_timeout_ms` (1500), `dashboard_path`,
-and `areas` — `{"<area_id>": {"group": "inside|outdoors|equipment", "band": "default|fridge|none"}}`
-to override the built-in grouping.
+| `glass` | `true` | `false` for flat HA cards (also the automatic result when card-mod is missing) |
+| `detail` | `"compact"` | `"full"` adds ` · 77.9–84.9 · ↓` to the small line |
+| `cards` | `"auto"` | `"native"` forces core cards, `"mushroom"` skips the probe |
+| `stats_days` | `7` | Trends window |
+| `probe_timeout_ms` | `1500` | how long to wait for custom cards to define |
+| `areas` | `{}` | `{"<area_id>": {"group": "inside\|outdoors\|equipment", "band": "default\|fridge\|none"}}` |
 
 **Do not "take control"** of the dashboard in the UI editor — that freezes the
-current snapshot into a static config and the strategy stops running.
-
-## Layout
-
-- `custom_components/area_averages/`
-  - `calc.py` — pure-stdlib, **zero** homeassistant imports: member
-    classification, summary text, stats, trend, issue rows, unique-id set
-    arithmetic, unit normalisation. Shared by `sensor.py` and the fixture
-    builder so the two can never drift; unit-testable with plain `python3 -c`.
-  - `sensor.py` — `AreaAveragesManager` (registry watching, membership, orphan
-    pruning) + `AreaAverageSensor` (mean, health model, trend, restore state)
-  - `switch.py`, `diagnostics.py`, `icons.json`, `config_flow.py`
-- `www/area_averages_strategy.js` — the dashboard strategy (see above)
-- `deploy.sh` — tar → base64 → `the guest agent`, ships `custom_components/`
-  **and** `www/`. Restart HA for integration changes; the JS needs none.
-- `tools/`
-  - `make_fixture.py` — rebuilds `fixture.json` from live HA (REST + a
-    stdlib websocket client for the area/device/entity registries). If the
-    deployed integration does not yet publish a contract attribute it is
-    backfilled via `calc.py` and **the backfill is printed as a warning**;
-    `--no-backfill` turns that off, which is how you prove a deploy took.
-  - `test_strategy.mjs` — runs the real strategy under node against the
-    fixture with a `customElements` shim. Four modes (mushroom/native ×
-    contract/legacy) plus card-combination and toggle-scenario suites;
-    ~4376 assertions, exit 1 on failure. `--json` also writes
-    `strategy_output.json`.
-  - `render_check.mjs` — POSTs every Jinja template the strategy emits to
-    `/api/template` and asserts each one compiles. `test_strategy.mjs` only
-    substring-matches those templates, so an unbalanced `{% endif %}` in a
-    colour ladder passes every structural assertion and then renders an
-    error string on every hero card. Since the mushroom path is the live
-    path here, that is most of the dashboard's colour and secondary-text
-    logic. Covers all three card modes; `--show` prints each result.
-  - `gen_dashboard.py --push` — registers the resource at
-    `/local/area_averages_strategy.js?v=<content-hash>` (cache-busting) and
-    saves the strategy config. No flag prints the static emergency snapshot;
-    `--push-static` pushes it. Needs `websockets`.
-  - `ha_ws.py` — generic HA websocket one-shot (JSON list in, results out).
-
-### Normal change loop
-
-```bash
-./deploy.sh                                    # ship both trees
-# restart HA only if the Python changed
-python3 tools/make_fixture.py --no-backfill    # must backfill nothing
-node tools/test_strategy.mjs                   # must exit 0
-node tools/render_check.mjs                    # must exit 0 (needs live HA)
-python3 tools/gen_dashboard.py --push          # only if the JS changed
-```
-
-Wait for `state: RUNNING` after a restart, not just HTTP 200 — `/api/` answers
-from the *outgoing* process for a few seconds, so a naive poll races and the
-next websocket call gets connection-refused:
-
-```bash
-until [ "$(curl -sk -H "Authorization: Bearer $(cat ~/.config/ha-token)" https://homeassistant.local:8123/api/config | python3 -c 'import json,sys; print(json.load(sys.stdin)["state"])')" = "RUNNING" ]; do sleep 5; done
-```
+strategy into a static snapshot. `gen_dashboard.py --push` restores it.
 
 ## Reveal controls are never gated on generate-time state
 

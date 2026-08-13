@@ -749,8 +749,8 @@
     "icon": "mdi:lan-disconnect"
    },
    "entity_id": "input_boolean.show_offline_sensors",
-   "last_changed": "2026-08-13T03:49:06.054413+00:00",
-   "last_reported": "2026-08-13T03:49:06.054413+00:00",
+   "last_changed": "2026-08-13T04:27:39.801474+00:00",
+   "last_reported": "2026-08-13T04:27:39.801474+00:00",
    "state": "off"
   },
   "sensor.3d_printer_average_temperature": {
@@ -767,7 +767,7 @@
     "low_battery": [],
     "maximum": 87.8,
     "member_count": 3,
-    "minimum": 80.6,
+    "minimum": 78.8,
     "offline": [],
     "reporting": 3,
     "sensors": [
@@ -775,7 +775,7 @@
      "sensor.altai_chamber_temperature",
      "sensor.altai_nozzle_temperature"
     ],
-    "spread": 7.2,
+    "spread": 9.0,
     "stale": [],
     "state_class": "measurement",
     "summary": "3 sensors",
@@ -784,9 +784,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.3d_printer_average_temperature",
-   "last_changed": "2026-08-13T03:49:41.695173+00:00",
-   "last_reported": "2026-08-13T03:49:41.695173+00:00",
-   "state": "85.4"
+   "last_changed": "2026-08-13T04:27:49.635928+00:00",
+   "last_reported": "2026-08-13T04:27:49.635928+00:00",
+   "state": "84.2"
   },
   "sensor.a4c138244934_ble_temperature_a4c138244934": {
    "attributes": {
@@ -806,8 +806,8 @@
     "uuid": "A4:C1:38:24:49:34"
    },
    "entity_id": "sensor.a4c138244934_ble_temperature_a4c138244934",
-   "last_changed": "2026-08-13T03:49:14.064116+00:00",
-   "last_reported": "2026-08-13T03:49:14.064116+00:00",
+   "last_changed": "2026-08-13T04:27:47.501082+00:00",
+   "last_reported": "2026-08-13T04:27:47.501082+00:00",
    "state": "81.662"
   },
   "sensor.altai_bed_target_temperature": {
@@ -818,8 +818,8 @@
     "unit_of_measurement": "\u00b0C"
    },
    "entity_id": "sensor.altai_bed_target_temperature",
-   "last_changed": "2026-08-13T03:49:16.266390+00:00",
-   "last_reported": "2026-08-13T03:49:16.266390+00:00",
+   "last_changed": "2026-08-13T04:27:49.631904+00:00",
+   "last_reported": "2026-08-13T04:27:49.631904+00:00",
    "state": "0"
   },
   "sensor.altai_bed_temperature": {
@@ -830,9 +830,9 @@
     "unit_of_measurement": "\u00b0C"
    },
    "entity_id": "sensor.altai_bed_temperature",
-   "last_changed": "2026-08-13T03:49:16.265786+00:00",
-   "last_reported": "2026-08-13T03:49:16.265786+00:00",
-   "state": "27"
+   "last_changed": "2026-08-13T04:27:49.626771+00:00",
+   "last_reported": "2026-08-13T04:27:49.626771+00:00",
+   "state": "26"
   },
   "sensor.altai_chamber_temperature": {
    "attributes": {
@@ -842,8 +842,8 @@
     "unit_of_measurement": "\u00b0C"
    },
    "entity_id": "sensor.altai_chamber_temperature",
-   "last_changed": "2026-08-13T03:49:41.695031+00:00",
-   "last_reported": "2026-08-13T03:49:41.695031+00:00",
+   "last_changed": "2026-08-13T04:27:49.632304+00:00",
+   "last_reported": "2026-08-13T04:27:49.632304+00:00",
    "state": "31"
   },
   "sensor.altai_nozzle_target_temperature": {
@@ -854,8 +854,8 @@
     "unit_of_measurement": "\u00b0C"
    },
    "entity_id": "sensor.altai_nozzle_target_temperature",
-   "last_changed": "2026-08-13T03:49:16.267795+00:00",
-   "last_reported": "2026-08-13T03:49:16.267795+00:00",
+   "last_changed": "2026-08-13T04:27:49.645644+00:00",
+   "last_reported": "2026-08-13T04:27:49.645644+00:00",
    "state": "0"
   },
   "sensor.altai_nozzle_temperature": {
@@ -866,9 +866,9 @@
     "unit_of_measurement": "\u00b0C"
    },
    "entity_id": "sensor.altai_nozzle_temperature",
-   "last_changed": "2026-08-13T03:49:16.267281+00:00",
-   "last_reported": "2026-08-13T03:49:16.267281+00:00",
-   "state": "31"
+   "last_changed": "2026-08-13T04:27:49.635789+00:00",
+   "last_reported": "2026-08-13T04:27:49.635789+00:00",
+   "state": "30"
   },
   "sensor.apollo_msr_2_b22324_dps310_temperature": {
    "attributes": {
@@ -879,8 +879,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.apollo_msr_2_b22324_dps310_temperature",
-   "last_changed": "2026-08-13T03:49:14.626986+00:00",
-   "last_reported": "2026-08-13T03:49:14.626986+00:00",
+   "last_changed": "2026-08-13T04:27:48.116908+00:00",
+   "last_reported": "2026-08-13T04:27:48.116908+00:00",
    "state": "unavailable"
   },
   "sensor.apollo_plt_1_a84e64_air_temperature": {
@@ -891,8 +891,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.apollo_plt_1_a84e64_air_temperature",
-   "last_changed": "2026-08-13T03:49:14.717241+00:00",
-   "last_reported": "2026-08-13T03:49:14.717241+00:00",
+   "last_changed": "2026-08-13T04:27:48.166337+00:00",
+   "last_reported": "2026-08-13T04:27:48.166337+00:00",
    "state": "unavailable"
   },
   "sensor.atc_4934_temperature": {
@@ -903,8 +903,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.atc_4934_temperature",
-   "last_changed": "2026-08-13T03:49:20.562201+00:00",
-   "last_reported": "2026-08-13T03:49:23.072830+00:00",
+   "last_changed": "2026-08-13T04:27:53.905190+00:00",
+   "last_reported": "2026-08-13T04:27:57.110518+00:00",
    "state": "unavailable"
   },
   "sensor.bedroom_average_temperature": {
@@ -919,9 +919,9 @@
      "Pothos Temperature: offline"
     ],
     "low_battery": [],
-    "maximum": 84.92,
+    "maximum": 83.48,
     "member_count": 6,
-    "minimum": 77.9,
+    "minimum": 77.18,
     "offline": [
      "sensor.mmwave_stick1_temperature",
      "sensor.pothos_temperature"
@@ -935,7 +935,7 @@
      "sensor.pothos_temperature",
      "sensor.shakti_temperature"
     ],
-    "spread": 7.02,
+    "spread": 6.3,
     "stale": [],
     "state_class": "measurement",
     "summary": "4 of 6 sensors",
@@ -944,9 +944,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.bedroom_average_temperature",
-   "last_changed": "2026-08-13T03:51:21.903960+00:00",
-   "last_reported": "2026-08-13T03:51:21.903960+00:00",
-   "state": "82.62"
+   "last_changed": "2026-08-13T04:29:56.692936+00:00",
+   "last_reported": "2026-08-13T04:29:56.692936+00:00",
+   "state": "81.68"
   },
   "sensor.bedroom_echo_temperature": {
    "attributes": {
@@ -956,9 +956,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.bedroom_echo_temperature",
-   "last_changed": "2026-08-13T03:49:19.919897+00:00",
-   "last_reported": "2026-08-13T03:49:19.919897+00:00",
-   "state": "84.92"
+   "last_changed": "2026-08-13T04:27:53.880116+00:00",
+   "last_reported": "2026-08-13T04:27:53.880116+00:00",
+   "state": "83.48"
   },
   "sensor.bedroom_eink_temperature": {
    "attributes": {
@@ -968,8 +968,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.bedroom_eink_temperature",
-   "last_changed": "2026-08-13T03:49:20.603447+00:00",
-   "last_reported": "2026-08-13T03:49:20.603447+00:00",
+   "last_changed": "2026-08-13T04:27:54.014995+00:00",
+   "last_reported": "2026-08-13T04:27:54.014995+00:00",
    "state": "unavailable"
   },
   "sensor.bedroom_ith_11_b_0440_temperature": {
@@ -980,9 +980,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.bedroom_ith_11_b_0440_temperature",
-   "last_changed": "2026-08-13T03:49:20.615045+00:00",
-   "last_reported": "2026-08-13T03:49:20.615045+00:00",
-   "state": "77.9"
+   "last_changed": "2026-08-13T04:27:53.969691+00:00",
+   "last_reported": "2026-08-13T04:27:53.969691+00:00",
+   "state": "77.18"
   },
   "sensor.bench_average_temperature": {
    "attributes": {
@@ -1001,7 +1001,7 @@
      "waveshare-test SEN55 Temperature: offline"
     ],
     "low_battery": [],
-    "maximum": 84.02,
+    "maximum": 83.84,
     "member_count": 9,
     "minimum": 79.52,
     "offline": [
@@ -1025,7 +1025,7 @@
      "sensor.tp359s_5848_temperature",
      "sensor.waveshare_test_sen55_temperature"
     ],
-    "spread": 4.5,
+    "spread": 4.32,
     "stale": [],
     "state_class": "measurement",
     "summary": "2 of 9 sensors",
@@ -1034,9 +1034,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.bench_average_temperature",
-   "last_changed": "2026-08-13T03:51:29.202923+00:00",
-   "last_reported": "2026-08-13T03:51:29.202923+00:00",
-   "state": "81.77"
+   "last_changed": "2026-08-13T04:27:54.036255+00:00",
+   "last_reported": "2026-08-13T04:27:57.111403+00:00",
+   "state": "81.68"
   },
   "sensor.derry_temperature": {
    "attributes": {
@@ -1048,9 +1048,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.derry_temperature",
-   "last_changed": "2026-08-13T03:49:16.651817+00:00",
-   "last_reported": "2026-08-13T03:49:16.651817+00:00",
-   "state": "82.4"
+   "last_changed": "2026-08-13T04:27:48.825309+00:00",
+   "last_reported": "2026-08-13T04:27:48.825309+00:00",
+   "state": "81.5"
   },
   "sensor.esp32_thermal_ambient": {
    "attributes": {
@@ -1060,8 +1060,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.esp32_thermal_ambient",
-   "last_changed": "2026-08-13T03:49:14.572422+00:00",
-   "last_reported": "2026-08-13T03:49:14.572422+00:00",
+   "last_changed": "2026-08-13T04:27:48.218674+00:00",
+   "last_reported": "2026-08-13T04:27:48.218674+00:00",
    "state": "unavailable"
   },
   "sensor.esp32_thermal_object": {
@@ -1072,8 +1072,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.esp32_thermal_object",
-   "last_changed": "2026-08-13T03:49:14.572968+00:00",
-   "last_reported": "2026-08-13T03:49:14.572968+00:00",
+   "last_changed": "2026-08-13T04:27:48.223008+00:00",
+   "last_reported": "2026-08-13T04:27:48.223008+00:00",
    "state": "unavailable"
   },
   "sensor.fridge_average_temperature": {
@@ -1102,8 +1102,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.fridge_average_temperature",
-   "last_changed": "2026-08-13T03:49:20.613139+00:00",
-   "last_reported": "2026-08-13T03:49:20.613139+00:00",
+   "last_changed": "2026-08-13T04:27:54.029841+00:00",
+   "last_reported": "2026-08-13T04:27:54.029841+00:00",
    "state": "52.52"
   },
   "sensor.fridge_probe_temperature": {
@@ -1114,8 +1114,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.fridge_probe_temperature",
-   "last_changed": "2026-08-13T03:49:20.613037+00:00",
-   "last_reported": "2026-08-13T03:49:20.613037+00:00",
+   "last_changed": "2026-08-13T04:27:54.029737+00:00",
+   "last_reported": "2026-08-13T04:27:54.029737+00:00",
    "state": "52.52"
   },
   "sensor.fridge_t": {
@@ -1126,9 +1126,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.fridge_t",
-   "last_changed": "2026-08-13T03:49:20.585712+00:00",
-   "last_reported": "2026-08-13T03:49:20.585712+00:00",
-   "state": "41.828"
+   "last_changed": "2026-08-13T04:29:28.199446+00:00",
+   "last_reported": "2026-08-13T04:29:28.199446+00:00",
+   "state": "41.918"
   },
   "sensor.h5075_2958_temperature": {
    "attributes": {
@@ -1138,9 +1138,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.h5075_2958_temperature",
-   "last_changed": "2026-08-13T03:51:21.903812+00:00",
-   "last_reported": "2026-08-13T03:51:21.903812+00:00",
-   "state": "84.74"
+   "last_changed": "2026-08-13T04:29:56.692774+00:00",
+   "last_reported": "2026-08-13T04:29:56.692774+00:00",
+   "state": "83.3"
   },
   "sensor.hippocrates_plant_temperature": {
    "attributes": {
@@ -1150,9 +1150,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.hippocrates_plant_temperature",
-   "last_changed": "2026-08-13T03:50:59.872567+00:00",
-   "last_reported": "2026-08-13T03:50:59.872567+00:00",
-   "state": "73.76"
+   "last_changed": "2026-08-13T04:27:56.561059+00:00",
+   "last_reported": "2026-08-13T04:27:56.561059+00:00",
+   "state": "unknown"
   },
   "sensor.hippocrates_temperature_2": {
    "attributes": {
@@ -1164,9 +1164,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.hippocrates_temperature_2",
-   "last_changed": "2026-08-13T03:49:16.616565+00:00",
-   "last_reported": "2026-08-13T03:49:16.616565+00:00",
-   "state": "73.76"
+   "last_changed": "2026-08-13T04:27:48.771423+00:00",
+   "last_reported": "2026-08-13T04:27:48.771423+00:00",
+   "state": "73.22"
   },
   "sensor.ith_11_b_0090_temperature": {
    "attributes": {
@@ -1176,8 +1176,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.ith_11_b_0090_temperature",
-   "last_changed": "2026-08-13T03:49:20.588385+00:00",
-   "last_reported": "2026-08-13T03:49:20.588385+00:00",
+   "last_changed": "2026-08-13T04:27:53.955551+00:00",
+   "last_reported": "2026-08-13T04:27:53.955551+00:00",
    "state": "unavailable"
   },
   "sensor.ith_11_b_0e38_temperature": {
@@ -1188,8 +1188,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.ith_11_b_0e38_temperature",
-   "last_changed": "2026-08-13T03:49:20.618547+00:00",
-   "last_reported": "2026-08-13T03:49:20.618547+00:00",
+   "last_changed": "2026-08-13T04:27:53.973670+00:00",
+   "last_reported": "2026-08-13T04:27:53.973670+00:00",
    "state": "unavailable"
   },
   "sensor.kitchen_average_temperature": {
@@ -1225,8 +1225,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.kitchen_average_temperature",
-   "last_changed": "2026-08-13T03:49:14.348778+00:00",
-   "last_reported": "2026-08-13T03:49:22.297327+00:00",
+   "last_changed": "2026-08-13T04:27:46.915376+00:00",
+   "last_reported": "2026-08-13T04:27:55.874510+00:00",
    "state": "unknown"
   },
   "sensor.kitchen_thermometer_temperature": {
@@ -1237,8 +1237,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.kitchen_thermometer_temperature",
-   "last_changed": "2026-08-13T03:49:23.374904+00:00",
-   "last_reported": "2026-08-13T03:49:23.374904+00:00",
+   "last_changed": "2026-08-13T04:27:56.738074+00:00",
+   "last_reported": "2026-08-13T04:27:56.738074+00:00",
    "state": "unknown"
   },
   "sensor.kitten_room_thermometer_temperature": {
@@ -1249,9 +1249,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.kitten_room_thermometer_temperature",
-   "last_changed": "2026-08-13T03:49:20.638653+00:00",
-   "last_reported": "2026-08-13T03:49:20.638653+00:00",
-   "state": "82.04"
+   "last_changed": "2026-08-13T04:27:54.046501+00:00",
+   "last_reported": "2026-08-13T04:27:54.046501+00:00",
+   "state": "81.14"
   },
   "sensor.kittens_average_temperature": {
    "attributes": {
@@ -1262,7 +1262,7 @@
     "issue": null,
     "issues": [],
     "low_battery": [],
-    "maximum": 82.04,
+    "maximum": 81.14,
     "member_count": 2,
     "minimum": 78.98,
     "offline": [],
@@ -1271,7 +1271,7 @@
      "sensor.kitten_room_thermometer_temperature",
      "sensor.lionel_temperature_2"
     ],
-    "spread": 3.06,
+    "spread": 2.16,
     "stale": [],
     "state_class": "measurement",
     "summary": "2 sensors",
@@ -1280,9 +1280,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.kittens_average_temperature",
-   "last_changed": "2026-08-13T03:49:20.638748+00:00",
-   "last_reported": "2026-08-13T03:49:20.638748+00:00",
-   "state": "80.51"
+   "last_changed": "2026-08-13T04:27:54.046598+00:00",
+   "last_reported": "2026-08-13T04:27:54.046598+00:00",
+   "state": "80.06"
   },
   "sensor.lb_dew_point": {
    "attributes": {
@@ -1293,9 +1293,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.lb_dew_point",
-   "last_changed": "2026-08-13T03:49:14.384570+00:00",
-   "last_reported": "2026-08-13T03:49:14.384570+00:00",
-   "state": "64.67"
+   "last_changed": "2026-08-13T04:27:47.425194+00:00",
+   "last_reported": "2026-08-13T04:27:47.425194+00:00",
+   "state": "64.436"
   },
   "sensor.lb_feels_like_temperature": {
    "attributes": {
@@ -1306,9 +1306,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.lb_feels_like_temperature",
-   "last_changed": "2026-08-13T03:49:14.385709+00:00",
-   "last_reported": "2026-08-13T03:49:14.385709+00:00",
-   "state": "70.682"
+   "last_changed": "2026-08-13T04:27:47.430735+00:00",
+   "last_reported": "2026-08-13T04:27:47.430735+00:00",
+   "state": "70.07"
   },
   "sensor.lionel_temperature_2": {
    "attributes": {
@@ -1320,8 +1320,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.lionel_temperature_2",
-   "last_changed": "2026-08-13T03:49:16.636603+00:00",
-   "last_reported": "2026-08-13T03:49:16.636603+00:00",
+   "last_changed": "2026-08-13T04:27:48.801760+00:00",
+   "last_reported": "2026-08-13T04:27:48.801760+00:00",
    "state": "78.98"
   },
   "sensor.living_room_average_temperature": {
@@ -1337,9 +1337,9 @@
      "otter Temperature: offline"
     ],
     "low_battery": [],
-    "maximum": 82.4,
+    "maximum": 81.68,
     "member_count": 6,
-    "minimum": 82.04,
+    "minimum": 81.5,
     "offline": [
      "sensor.ith_11_b_0090_temperature",
      "sensor.lr_plant_derry_temperature",
@@ -1354,7 +1354,7 @@
      "sensor.otter_temp",
      "sensor.otter_temperature"
     ],
-    "spread": 0.36,
+    "spread": 0.18,
     "stale": [],
     "state_class": "measurement",
     "summary": "3 of 6 sensors",
@@ -1363,9 +1363,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.living_room_average_temperature",
-   "last_changed": "2026-08-13T03:49:19.919560+00:00",
-   "last_reported": "2026-08-13T03:49:22.151870+00:00",
-   "state": "82.28"
+   "last_changed": "2026-08-13T04:27:53.876328+00:00",
+   "last_reported": "2026-08-13T04:27:55.725063+00:00",
+   "state": "81.62"
   },
   "sensor.livingroom_echo_temperature": {
    "attributes": {
@@ -1375,9 +1375,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.livingroom_echo_temperature",
-   "last_changed": "2026-08-13T03:49:19.919393+00:00",
-   "last_reported": "2026-08-13T03:49:19.919393+00:00",
-   "state": "82.04"
+   "last_changed": "2026-08-13T04:27:53.876062+00:00",
+   "last_reported": "2026-08-13T04:27:53.876062+00:00",
+   "state": "81.68"
   },
   "sensor.lnlinkha_e04b4101a3b00000000000009cac0000_t": {
    "attributes": {
@@ -1386,8 +1386,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.lnlinkha_e04b4101a3b00000000000009cac0000_t",
-   "last_changed": "2026-08-13T03:49:21.881905+00:00",
-   "last_reported": "2026-08-13T03:49:21.881905+00:00",
+   "last_changed": "2026-08-13T04:27:54.954074+00:00",
+   "last_reported": "2026-08-13T04:27:54.954074+00:00",
    "state": "unavailable"
   },
   "sensor.long_beach_waqi_temperature": {
@@ -1399,8 +1399,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.long_beach_waqi_temperature",
-   "last_changed": "2026-08-13T03:49:14.364004+00:00",
-   "last_reported": "2026-08-13T03:49:14.364004+00:00",
+   "last_changed": "2026-08-13T04:27:47.405507+00:00",
+   "last_reported": "2026-08-13T04:27:47.405507+00:00",
    "state": "71.6"
   },
   "sensor.lr_plant_derry_temperature": {
@@ -1411,8 +1411,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.lr_plant_derry_temperature",
-   "last_changed": "2026-08-13T03:49:23.362895+00:00",
-   "last_reported": "2026-08-13T03:49:23.362895+00:00",
+   "last_changed": "2026-08-13T04:27:56.727063+00:00",
+   "last_reported": "2026-08-13T04:27:56.727063+00:00",
    "state": "unknown"
   },
   "sensor.master_bathroom_average_temperature": {
@@ -1424,9 +1424,9 @@
     "issue": null,
     "issues": [],
     "low_battery": [],
-    "maximum": 82.76,
+    "maximum": 82.58,
     "member_count": 1,
-    "minimum": 82.76,
+    "minimum": 82.58,
     "offline": [],
     "reporting": 1,
     "sensors": [
@@ -1441,9 +1441,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.master_bathroom_average_temperature",
-   "last_changed": "2026-08-13T03:49:16.627672+00:00",
-   "last_reported": "2026-08-13T03:49:16.627672+00:00",
-   "state": "82.76"
+   "last_changed": "2026-08-13T04:27:48.785266+00:00",
+   "last_reported": "2026-08-13T04:27:48.785266+00:00",
+   "state": "82.58"
   },
   "sensor.misty_temperature_2": {
    "attributes": {
@@ -1455,9 +1455,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.misty_temperature_2",
-   "last_changed": "2026-08-13T03:49:16.627568+00:00",
-   "last_reported": "2026-08-13T03:49:16.627568+00:00",
-   "state": "82.76"
+   "last_changed": "2026-08-13T04:27:48.785133+00:00",
+   "last_reported": "2026-08-13T04:27:48.785133+00:00",
+   "state": "82.58"
   },
   "sensor.mmwave_stick1_temperature": {
    "attributes": {
@@ -1467,8 +1467,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.mmwave_stick1_temperature",
-   "last_changed": "2026-08-13T03:49:23.218241+00:00",
-   "last_reported": "2026-08-13T03:49:23.218241+00:00",
+   "last_changed": "2026-08-13T04:27:56.582861+00:00",
+   "last_reported": "2026-08-13T04:27:56.582861+00:00",
    "state": "unknown"
   },
   "sensor.office_average_temperature": {
@@ -1481,9 +1481,10 @@
     ],
     "friendly_name": "Office Average Temperature",
     "healthy": false,
-    "issue": "Pepper PLT-1 Air Temperature: offline; sensor.office_temp: offline; office_temp1_1B80 Temperature: offline; ble battery ATC Nimbus: battery 3%",
+    "issue": "Pepper PLT-1 Air Temperature: offline; Hippocrates Soil Sensor Temperature: offline; sensor.office_temp: offline; office_temp1_1B80 Temperature: offline; ble battery ATC Nimbus: battery 3%",
     "issues": [
      "Pepper PLT-1 Air Temperature: offline",
+     "Hippocrates Soil Sensor Temperature: offline",
      "sensor.office_temp: offline",
      "office_temp1_1B80 Temperature: offline",
      "ble battery ATC Nimbus: battery 3%"
@@ -1493,13 +1494,14 @@
     ],
     "maximum": 81.66,
     "member_count": 6,
-    "minimum": 73.76,
+    "minimum": 73.22,
     "offline": [
      "sensor.apollo_plt_1_a84e64_air_temperature",
+     "sensor.hippocrates_plant_temperature",
      "sensor.office_temp",
      "sensor.office_temp1"
     ],
-    "reporting": 3,
+    "reporting": 2,
     "sensors": [
      "sensor.a4c138244934_ble_temperature_a4c138244934",
      "sensor.apollo_plt_1_a84e64_air_temperature",
@@ -1508,18 +1510,18 @@
      "sensor.office_temp",
      "sensor.office_temp1"
     ],
-    "spread": 7.9,
+    "spread": 8.44,
     "stale": [],
     "state_class": "measurement",
-    "summary": "3 of 6 sensors",
+    "summary": "2 of 6 sensors",
     "trend": "unknown",
     "trend_rate": null,
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.office_average_temperature",
-   "last_changed": "2026-08-13T03:50:59.872701+00:00",
-   "last_reported": "2026-08-13T03:50:59.872701+00:00",
-   "state": "76.39"
+   "last_changed": "2026-08-13T04:27:48.771568+00:00",
+   "last_reported": "2026-08-13T04:27:55.530388+00:00",
+   "state": "77.44"
   },
   "sensor.office_temp": {
    "attributes": {
@@ -1529,8 +1531,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.office_temp",
-   "last_changed": "2026-08-13T03:49:20.598684+00:00",
-   "last_reported": "2026-08-13T03:49:20.598684+00:00",
+   "last_changed": "2026-08-13T04:27:54.008171+00:00",
+   "last_reported": "2026-08-13T04:27:54.008171+00:00",
    "state": "unavailable"
   },
   "sensor.office_temp1": {
@@ -1541,8 +1543,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.office_temp1",
-   "last_changed": "2026-08-13T03:49:20.600336+00:00",
-   "last_reported": "2026-08-13T03:49:20.600336+00:00",
+   "last_changed": "2026-08-13T04:27:54.009933+00:00",
+   "last_reported": "2026-08-13T04:27:54.009933+00:00",
    "state": "unavailable"
   },
   "sensor.openweathermap_temperature": {
@@ -1554,9 +1556,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.openweathermap_temperature",
-   "last_changed": "2026-08-13T03:49:14.385169+00:00",
-   "last_reported": "2026-08-13T03:49:14.385169+00:00",
-   "state": "70.07"
+   "last_changed": "2026-08-13T04:27:47.427706+00:00",
+   "last_reported": "2026-08-13T04:27:47.427706+00:00",
+   "state": "69.476"
   },
   "sensor.otter_temp": {
    "attributes": {
@@ -1566,8 +1568,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.otter_temp",
-   "last_changed": "2026-08-13T03:49:23.364383+00:00",
-   "last_reported": "2026-08-13T03:49:23.364383+00:00",
+   "last_changed": "2026-08-13T04:27:56.729475+00:00",
+   "last_reported": "2026-08-13T04:27:56.729475+00:00",
    "state": "unknown"
   },
   "sensor.otter_temperature": {
@@ -1580,9 +1582,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.otter_temperature",
-   "last_changed": "2026-08-13T03:49:16.643917+00:00",
-   "last_reported": "2026-08-13T03:49:16.643917+00:00",
-   "state": "82.4"
+   "last_changed": "2026-08-13T04:27:48.813973+00:00",
+   "last_reported": "2026-08-13T04:27:48.813973+00:00",
+   "state": "81.68"
   },
   "sensor.outside_average_temperature": {
    "attributes": {
@@ -1593,9 +1595,9 @@
     "issue": null,
     "issues": [],
     "low_battery": [],
-    "maximum": 78.8,
+    "maximum": 78.08,
     "member_count": 1,
-    "minimum": 78.8,
+    "minimum": 78.08,
     "offline": [],
     "reporting": 1,
     "sensors": [
@@ -1610,9 +1612,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.outside_average_temperature",
-   "last_changed": "2026-08-13T03:49:20.619752+00:00",
-   "last_reported": "2026-08-13T03:49:20.619752+00:00",
-   "state": "78.8"
+   "last_changed": "2026-08-13T04:27:53.977114+00:00",
+   "last_reported": "2026-08-13T04:27:53.977114+00:00",
+   "state": "78.08"
   },
   "sensor.outside_ith_11_b_12b4_temperature": {
    "attributes": {
@@ -1622,9 +1624,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.outside_ith_11_b_12b4_temperature",
-   "last_changed": "2026-08-13T03:49:20.619648+00:00",
-   "last_reported": "2026-08-13T03:49:20.619648+00:00",
-   "state": "78.8"
+   "last_changed": "2026-08-13T04:27:53.976995+00:00",
+   "last_reported": "2026-08-13T04:27:53.976995+00:00",
+   "state": "78.08"
   },
   "sensor.pothos_temperature": {
    "attributes": {
@@ -1636,8 +1638,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.pothos_temperature",
-   "last_changed": "2026-08-13T03:49:16.657092+00:00",
-   "last_reported": "2026-08-13T03:49:16.657092+00:00",
+   "last_changed": "2026-08-13T04:27:48.838730+00:00",
+   "last_reported": "2026-08-13T04:27:48.838730+00:00",
    "state": "unknown"
   },
   "sensor.sensorbox_aht20_temperature": {
@@ -1648,9 +1650,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.sensorbox_aht20_temperature",
-   "last_changed": "2026-08-13T03:51:28.834265+00:00",
-   "last_reported": "2026-08-13T03:51:28.834265+00:00",
-   "state": "84.3182678222656"
+   "last_changed": "2026-08-13T04:30:09.193850+00:00",
+   "last_reported": "2026-08-13T04:30:09.193850+00:00",
+   "state": "85.9452743530273"
   },
   "sensor.sensorbox_bmp280_temperature": {
    "attributes": {
@@ -1660,9 +1662,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.sensorbox_bmp280_temperature",
-   "last_changed": "2026-08-13T03:51:28.833732+00:00",
-   "last_reported": "2026-08-13T03:51:28.833732+00:00",
-   "state": "84.2814224243164"
+   "last_changed": "2026-08-13T04:30:09.193332+00:00",
+   "last_reported": "2026-08-13T04:30:09.193332+00:00",
+   "state": "85.9488826751709"
   },
   "sensor.sensorbox_scd40_temperature": {
    "attributes": {
@@ -1673,9 +1675,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.sensorbox_scd40_temperature",
-   "last_changed": "2026-08-13T03:51:10.635387+00:00",
-   "last_reported": "2026-08-13T03:51:10.635387+00:00",
-   "state": "90.2208099365234"
+   "last_changed": "2026-08-13T04:30:10.731199+00:00",
+   "last_reported": "2026-08-13T04:30:10.731199+00:00",
+   "state": "92.2107086181641"
   },
   "sensor.shakti_temperature": {
    "attributes": {
@@ -1687,9 +1689,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.shakti_temperature",
-   "last_changed": "2026-08-13T03:49:16.603613+00:00",
-   "last_reported": "2026-08-13T03:49:16.603613+00:00",
-   "state": "82.94"
+   "last_changed": "2026-08-13T04:27:48.756409+00:00",
+   "last_reported": "2026-08-13T04:27:48.756409+00:00",
+   "state": "82.76"
   },
   "sensor.snewy_temperature": {
    "attributes": {
@@ -1699,8 +1701,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.snewy_temperature",
-   "last_changed": "2026-08-13T03:49:20.607411+00:00",
-   "last_reported": "2026-08-13T03:49:20.607411+00:00",
+   "last_changed": "2026-08-13T04:27:54.024471+00:00",
+   "last_reported": "2026-08-13T04:27:54.024471+00:00",
    "state": "79.52"
   },
   "sensor.tp359s_5848_temperature": {
@@ -1711,9 +1713,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.tp359s_5848_temperature",
-   "last_changed": "2026-08-13T03:51:29.202745+00:00",
-   "last_reported": "2026-08-13T03:51:29.202745+00:00",
-   "state": "84.02"
+   "last_changed": "2026-08-13T04:27:54.036126+00:00",
+   "last_reported": "2026-08-13T04:27:54.036126+00:00",
+   "state": "83.84"
   },
   "sensor.waveshare_test_sen55_temperature": {
    "attributes": {
@@ -1724,8 +1726,8 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.waveshare_test_sen55_temperature",
-   "last_changed": "2026-08-13T03:49:14.728236+00:00",
-   "last_reported": "2026-08-13T03:49:14.728236+00:00",
+   "last_changed": "2026-08-13T04:27:48.185957+00:00",
+   "last_reported": "2026-08-13T04:27:48.185957+00:00",
    "state": "unavailable"
   },
   "sensor.weather_average_temperature": {
@@ -1739,7 +1741,7 @@
     "low_battery": [],
     "maximum": 71.6,
     "member_count": 4,
-    "minimum": 64.67,
+    "minimum": 64.44,
     "offline": [],
     "reporting": 4,
     "sensors": [
@@ -1748,7 +1750,7 @@
      "sensor.long_beach_waqi_temperature",
      "sensor.openweathermap_temperature"
     ],
-    "spread": 6.93,
+    "spread": 7.16,
     "stale": [],
     "state_class": "measurement",
     "summary": "4 sensors",
@@ -1757,9 +1759,9 @@
     "unit_of_measurement": "\u00b0F"
    },
    "entity_id": "sensor.weather_average_temperature",
-   "last_changed": "2026-08-13T03:49:14.385825+00:00",
-   "last_reported": "2026-08-13T03:49:14.385825+00:00",
-   "state": "69.26"
+   "last_changed": "2026-08-13T04:27:47.430838+00:00",
+   "last_reported": "2026-08-13T04:27:47.430838+00:00",
+   "state": "68.9"
   },
   "switch.area_averages_show_offline": {
    "attributes": {
@@ -1767,8 +1769,18 @@
     "icon": "mdi:lan-disconnect"
    },
    "entity_id": "switch.area_averages_show_offline",
-   "last_changed": "2026-08-13T03:49:14.352906+00:00",
-   "last_reported": "2026-08-13T03:49:14.352906+00:00",
+   "last_changed": "2026-08-13T04:27:46.924383+00:00",
+   "last_reported": "2026-08-13T04:27:46.924383+00:00",
+   "state": "off"
+  },
+  "switch.area_averages_show_sensors": {
+   "attributes": {
+    "friendly_name": "Show all sensors",
+    "icon": "mdi:format-list-bulleted"
+   },
+   "entity_id": "switch.area_averages_show_sensors",
+   "last_changed": "2026-08-13T04:27:46.924592+00:00",
+   "last_reported": "2026-08-13T04:27:46.924592+00:00",
    "state": "off"
   }
  }

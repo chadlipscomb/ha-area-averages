@@ -1,44 +1,51 @@
 /* Area Averages dashboard strategy.
  *
- * Generates the whole "Area Temperatures" dashboard at load time from the
- * live area_averages sensors, so the page tracks reality: new sensors, new
- * areas, exclusions — no regeneration step.
+ * Generates the whole "Area Temperatures" dashboard at load time from the live
+ * area_averages sensors, so the page tracks reality — new sensors, new areas,
+ * exclusions — with no regeneration step.
  *
- * Shape: a Rooms view of one hero card per room, grouped Inside / Outdoors /
- * Equipment & Cold, above a Status card that states what is broken; one
- * subview per room (path room-<area_id>) carrying the member sensors, the
- * excluded ones and their history; and a Trends view built on core
- * statistics-graph cards.
+ * Shape: a Rooms view of one section per area, each holding the area name, the
+ * temperature at display size, a button that reveals that room's sensors and a
+ * button that reveals only the dark ones; plus a Trends view of core
+ * statistics-graph cards, which is where all history lives.
  *
- * Colour never comes from JS: generate() runs once per page load, so a colour
- * computed here would freeze until reload. The mushroom path emits a Jinja
- * ladder, the native path emits one tile per band with numeric_state
- * visibility. Both come from the single BANDS table below.
+ * Look: Liquid Glass. Each card is a translucent blurred pane with a specular
+ * rim, expressed in color-mix() against HA's theme variables so one definition
+ * serves light and dark. Needs card-mod; without it the same structure renders
+ * as ordinary HA cards.
  *
- * Custom cards (mushroom-template-card, mini-graph-card, stack-in-card) are
- * probed at runtime; if they are not defined the whole dashboard falls back to
- * core cards, still correctly coloured.
+ * Two rules this file exists to keep:
+ *   1. Colour never comes from JS. generate() runs once per page load, so a
+ *      colour computed here would freeze until reload. The mushroom path emits
+ *      a Jinja ladder; the core path emits one tile per band with numeric_state
+ *      visibility. Both come from the single BANDS table below.
+ *   2. Nothing is gated on generate-time state. Every reveal is a live
+ *      visibility condition, so a sensor that dies while the page is open
+ *      surfaces its own button instead of vanishing silently.
  *
  * Registered as a lovelace resource (/local/area_averages_strategy.js).
  * Dashboard config is just: {"strategy": {"type": "custom:area-temperatures"}}
- * Options: history_hours (24), stats_days (7), cards ("auto"|"mushroom"|
- * "native"), probe_timeout_ms (1500), dashboard_path, areas
- * ({"<area_id>": {"group": "inside|outdoors|equipment",
- *                 "band": "default|fridge|none"}}).
+ * Options: glass (true), detail ("compact"|"full"), cards
+ * ("auto"|"mushroom"|"native"), stats_days (7), probe_timeout_ms (1500),
+ * dashboard_path, areas ({"<area_id>": {"group": "...", "band": "..."}}).
  *
  * NOTE: do not "take control" of the dashboard in the UI editor — that
  * freezes the current snapshot into a static config.
  */
 
-const VERSION = "2.0.0";
+const VERSION = "3.0.0";
 const PLATFORM = "area_averages";
 const OFFLINE = ["unavailable", "unknown"];
 const MAX_OFFLINE_BADGES = 3;
-const TOGGLES = [
+const OFFLINE_TOGGLES = [
   "switch.area_averages_show_offline",
   "input_boolean.show_offline_sensors",
 ];
-const PROBE = ["mushroom-template-card", "mini-graph-card", "stack-in-card"];
+const SENSOR_TOGGLES = [
+  "switch.area_averages_show_sensors",
+  "input_boolean.show_all_sensors",
+];
+const PROBE = ["mushroom-template-card", "card-mod"];
 const PROBE_TIMEOUT = 1500;
 const DEFAULT_DASHBOARD = "room-temperatures";
 /* Half of the 2-decimal resolution the averages publish. */
@@ -110,30 +117,16 @@ function readOptions(config) {
   const cards =
     raw.cards === "native" || raw.cards === "mushroom" ? raw.cards : "auto";
   const timeout = Number(raw.probe_timeout_ms);
-  const heroColumns = Number(raw.hero_columns);
   return {
-    hours: Number(raw.history_hours) > 0 ? Number(raw.history_hours) : 24,
     statsDays: Number(raw.stats_days) > 0 ? Number(raw.stats_days) : 7,
     cards,
     probeTimeout: Number.isFinite(timeout) && timeout >= 0 ? timeout : PROBE_TIMEOUT,
     areas: raw.areas && typeof raw.areas === "object" ? raw.areas : {},
     dashboard: raw.dashboard_path || currentDashboardPath(),
-    // Overview density. Sparklines are OFF by default: eleven full-width
-    // 56px graphs read as a wall of long coloured lines rather than as
-    // sparklines, and the per-room views already carry real history.
-    sparklines: raw.sparklines === true,
-    // Threshold-coloured sparklines only on request — with the house sitting
-    // at 80-85 °F the whole ladder lands in amber/red, so every line comes
-    // out the same alarming colour and the colour stops meaning anything.
-    sparklineThresholds: raw.sparkline_thresholds === true,
-    // 12 = full row of its section. Half-width by default so the heroes tile
-    // two-up instead of stacking eleven full-bleed rows.
-    heroColumns:
-      Number.isFinite(heroColumns) && heroColumns >= 3 && heroColumns <= 12
-        ? heroColumns
-        : 6,
-    // "compact" keeps the secondary to value + coverage so it fits a
-    // half-width card; "full" adds the min-max range and the trend arrow.
+    // The Liquid Glass treatment. Needs card-mod; set false for flat HA cards.
+    glass: raw.glass !== false,
+    // "compact" is the temperature and its coverage; "full" adds the range
+    // and a trend arrow to the small line under it.
     detail: raw.detail === "full" ? "full" : "compact",
   };
 }
@@ -183,9 +176,10 @@ function attr(state, name, fallbackFn) {
   return fallbackFn ? fallbackFn(state) : undefined;
 }
 
-/* The integration owns the switch; the hand-made helper is the old name. */
-function resolveToggle(hass) {
-  for (const id of TOGGLES) if (hass.states[id]) return id;
+/* The integration owns these switches; the hand-made helpers are the old
+ * names, kept so an existing install does not lose its reveal controls. */
+function resolveToggle(hass, candidates) {
+  for (const id of candidates) if (hass.states[id]) return id;
   return null;
 }
 
@@ -245,15 +239,6 @@ function badgeIconTemplate(entityId, table) {
     `{% if s not in ['unavailable', 'unknown'] and s | float(0) > ` +
     `${table.hotAbove} %}${table.hotIcon}{% endif %}`
   );
-}
-
-function colorThresholds(table) {
-  if (!table.bands.length) return null;
-  const out = [{ value: 0, color: table.bands[0].hex }];
-  for (let i = 1; i < table.bands.length; i += 1) {
-    out.push({ value: table.bands[i].min, color: table.bands[i].hex });
-  }
-  return out;
 }
 
 /* ------------------------------------------------------------------ names */
@@ -390,284 +375,348 @@ function collectRooms(hass, deviceClass, opts) {
   return rooms;
 }
 
-function roomPath(room) {
-  const prefix = room.deviceClass === "temperature" ? "" : `${room.deviceClass}-`;
-  return `room-${prefix}${room.areaId}`;
+/* ------------------------------------------------------------------ glass */
+
+/* Liquid Glass. One translucent, blurred pane per card, lifted off the page
+ * by a soft shadow and edged with a specular highlight along its top rim.
+ *
+ * Everything is expressed against HA's own theme variables through
+ * color-mix(), so a single definition works in light and dark without
+ * hardcoding a palette: the pane borrows the theme's card colour, thins it to
+ * let the background through, and takes its rim and text tint from the
+ * theme's text colour. Nothing here changes layout — if card-mod is missing
+ * the cards simply render as ordinary HA cards. */
+
+const GLASS_RADIUS = 22;
+
+function glassPane({ radius = GLASS_RADIUS, tint = 62, lift = 1 } = {}) {
+  return `
+    ha-card {
+      background: color-mix(in srgb, var(--card-background-color) ${tint}%, transparent);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      backdrop-filter: blur(22px) saturate(180%);
+      border: 1px solid color-mix(in srgb, var(--primary-text-color) 10%, transparent);
+      border-radius: ${radius}px;
+      box-shadow:
+        0 ${2 * lift}px ${10 * lift}px color-mix(in srgb, #000 ${8 * lift}%, transparent),
+        0 ${8 * lift}px ${30 * lift}px color-mix(in srgb, #000 ${6 * lift}%, transparent),
+        inset 0 1px 0 color-mix(in srgb, #fff 40%, transparent);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+    ha-card:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 ${3 * lift}px ${14 * lift}px color-mix(in srgb, #000 10%, transparent),
+        0 ${12 * lift}px ${36 * lift}px color-mix(in srgb, #000 8%, transparent),
+        inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent);
+    }
+  `;
 }
 
-function roomNavigation(room, opts) {
-  return {
-    action: "navigate",
-    navigation_path: `/${opts.dashboard}/${roomPath(room)}`,
-  };
+/* The temperature is the point of the card, so it gets display-sized type.
+ * Tabular figures stop the number jittering as it changes. */
+const GLASS_READING = `
+  .primary {
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+  }
+  .secondary {
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    opacity: 0.62;
+  }
+`;
+
+const GLASS_PILL_TEXT = `
+  .primary { font-size: 13.5px; font-weight: 600; letter-spacing: 0.01em; }
+  .secondary { font-size: 11px; opacity: 0.55; }
+`;
+
+/* card-mod takes a plain string for the card itself, or a map when a shadow
+ * root has to be reached. Absent card-mod, both are inert extra keys. */
+function withGlass(card, ctx, { inner, radius, tint, lift } = {}) {
+  if (!ctx.caps.has("card-mod") || !ctx.opts.glass) return card;
+  const pane = glassPane({ radius, tint, lift });
+  card.card_mod = inner
+    ? { style: { ".": pane, "mushroom-state-info$": inner } }
+    : { style: pane };
+  return card;
 }
 
-/* ------------------------------------------------------------------- hero */
+/* --------------------------------------------------------------- the value */
 
-/* Live coverage line: "83.7 °F · 2 of 9 sensors · 80.6–85.8 · ↑ rising".
- * The summary attribute is preferred, but the same phrase is rebuilt in Jinja
- * when an older integration build does not publish it. */
-function heroSecondary(room, detail) {
-  const e = room.avg;
+/* "4 of 6 sensors" — the attribute when the integration publishes it, the
+ * same phrase rebuilt in Jinja when it does not. */
+function coverageExpr(entityId) {
   return (
-    `{% set s = states('${e}') %}` +
-    `{% set u = state_attr('${e}', 'unit_of_measurement') or '' %}` +
-    `{% set mc = state_attr('${e}', 'member_count') | int(0) %}` +
-    `{% set rp = state_attr('${e}', 'reporting') | int(0) %}` +
-    `{% set sm = state_attr('${e}', 'summary') %}` +
+    `{% set mc = state_attr('${entityId}', 'member_count') | int(0) %}` +
+    `{% set rp = state_attr('${entityId}', 'reporting') | int(0) %}` +
+    `{% set sm = state_attr('${entityId}', 'summary') %}` +
     `{% if sm is none %}` +
     `{% if rp == 0 %}{% set sm = 'no sensors reporting' %}` +
     `{% elif mc == 1 %}{% set sm = '1 sensor' %}` +
     `{% elif rp < mc %}{% set sm = rp ~ ' of ' ~ mc ~ ' sensors' %}` +
-    `{% else %}{% set sm = mc ~ ' sensors' %}{% endif %}{% endif %}` +
+    `{% else %}{% set sm = mc ~ ' sensors' %}{% endif %}{% endif %}`
+  );
+}
+
+/* Big line: the temperature, nothing else competing with it. */
+function readingPrimary(room) {
+  const e = room.avg;
+  return (
+    `{% set s = states('${e}') %}` +
+    `{% set u = state_attr('${e}', 'unit_of_measurement') or '' %}` +
+    `{% if s in ['unavailable', 'unknown'] %}—` +
+    `{% else %}{{ s | float(0) | round(1) }}{{ u }}{% endif %}`
+  );
+}
+
+/* Small line: coverage, plus the range and trend when asked for. */
+function readingSecondary(room, detail) {
+  const e = room.avg;
+  return (
+    coverageExpr(e) +
+    `{% set s = states('${e}') %}` +
     `{% if s in ['unavailable', 'unknown'] %}no data · {{ sm }}` +
-    `{% else %}{{ s | float(0) | round(1) }} {{ u }} · {{ sm }}` +
-    // The range and the trend arrow are real information but they push the
-    // secondary past what a half-width card can show, and it truncates
-    // mid-number. They live on the room's own view; opt in with detail: full.
+    `{% else %}{{ sm }}` +
     (detail === "full"
       ? `{% set mn = state_attr('${e}', 'minimum') %}` +
         `{% set mx = state_attr('${e}', 'maximum') %}` +
-        `{% if mc > 2 and mn is not none and mx is not none %}` +
+        `{% if mn is not none and mx is not none and mn != mx %}` +
         ` · {{ mn | round(1) }}–{{ mx | round(1) }}{% endif %}` +
         `{% set tr = state_attr('${e}', 'trend') %}` +
-        `{% if tr == 'rising' %} · ↑ rising` +
-        `{% elif tr == 'falling' %} · ↓ falling{% endif %}`
+        `{% if tr == 'rising' %} · ↑{% elif tr == 'falling' %} · ↓{% endif %}`
       : "") +
     `{% endif %}`
   );
 }
 
-function mushroomHero(room, ctx) {
+function readingCard(room, ctx) {
   const table = BANDS[room.band];
-  const color = iconColorTemplate(room.avg, table);
-  const badge = badgeIconTemplate(room.avg, table);
-  const card = {
-    type: "custom:mushroom-template-card",
-    entity: room.avg,
-    primary: room.area,
-    secondary: heroSecondary(room, ctx.opts.detail),
-    icon: room.icon,
-    tap_action: roomNavigation(room, ctx.opts),
-    hold_action: { action: "more-info" },
-  };
-  if (color) card.icon_color = color;
-  if (badge) {
-    card.badge_icon = badge;
-    card.badge_color = "red";
+  if (ctx.caps.has("mushroom-template-card")) {
+    const card = {
+      type: "custom:mushroom-template-card",
+      entity: room.avg,
+      primary: readingPrimary(room),
+      secondary: readingSecondary(room, ctx.opts.detail),
+      icon: room.icon,
+      tap_action: { action: "more-info" },
+      hold_action: { action: "more-info" },
+      grid_options: { columns: "full" },
+    };
+    const color = iconColorTemplate(room.avg, table);
+    const badge = badgeIconTemplate(room.avg, table);
+    if (color) card.icon_color = color;
+    if (badge) {
+      card.badge_icon = badge;
+      card.badge_color = "red";
+    }
+    return withGlass(card, ctx, { inner: GLASS_READING, tint: 58 });
   }
-  return card;
+  return nativeReading(room, ctx);
 }
 
-function miniGraph(room, ctx) {
-  const thresholds = colorThresholds(BANDS[room.band]);
-  const card = {
-    type: "custom:mini-graph-card",
-    entities: [{ entity: room.avg }],
-    hours_to_show: ctx.opts.hours,
-    points_per_hour: 3,
-    line_width: 2,
-    height: 56,
-    smoothing: true,
-    show: {
-      name: false,
-      icon: false,
-      state: false,
-      legend: false,
-      labels: false,
-      points: false,
-      fill: "fade",
-    },
-    min_bound_range: 8,
-    card_mod: { style: "ha-card { margin-top: -8px; }" },
-  };
-  if (thresholds && ctx.opts.sparklineThresholds) {
-    card.color_thresholds = thresholds;
-    card.color_thresholds_transition = "smooth";
-  } else {
-    // One quiet line. The hero's icon already carries the band colour, and
-    // repeating it across every sparkline just fills the page with red.
-    card.line_color = "var(--secondary-text-color)";
-  }
-  return card;
-}
-
-/* Core-only hero: one tile per band, exactly one of which is ever visible.
- * No features on the variants — hidden cards are still instantiated, and a
- * trend-graph feature on five variants would multiply the history fetches. */
-function nativeHero(room, ctx) {
-  const table = BANDS[room.band];
+/* Core-only reading: one tile per band, exactly one of which is ever visible,
+ * so the colour still tracks the temperature without any JS deciding it. */
+function nativeReading(room, ctx) {
+  const cuts = bandCuts(BANDS[room.band]);
   const base = {
     type: "tile",
     entity: room.avg,
     name: room.area,
     icon: room.icon,
-    state_content: room.hasSummary ? ["state", "summary"] : ["state"],
-    grid_options: { columns: ctx.opts.heroColumns },
-    tap_action: roomNavigation(room, ctx.opts),
-    hold_action: { action: "more-info" },
+    state_content: ["state", "summary"],
+    grid_options: { columns: "full" },
   };
-  if (!table.bands.length) return [base];
-  const cards = bandCuts(table).map((cut) => ({
-    ...base,
-    color: cut.band.color,
-    visibility: bandVisibility(room.avg, cut),
-  }));
-  cards.push({
-    ...base,
-    color: "grey",
-    visibility: [{ condition: "state", entity: room.avg, state: OFFLINE }],
-  });
+  if (!cuts.length) {
+    return withGlass({ ...base }, ctx, { tint: 58 });
+  }
+  const cards = cuts.map((cut) =>
+    withGlass(
+      {
+        ...base,
+        color: cut.color,
+        visibility: [bandVisibility(room.avg, cut)],
+      },
+      ctx,
+      { tint: 58 }
+    )
+  );
+  cards.push(
+    withGlass(
+      {
+        ...base,
+        color: "grey",
+        visibility: [{ condition: "state", entity: room.avg, state: OFFLINE }],
+      },
+      ctx,
+      { tint: 58 }
+    )
+  );
   return cards;
 }
 
-function heroCards(room, ctx) {
-  const grid = { columns: ctx.opts.heroColumns };
-  if (!ctx.caps.has("mushroom-template-card")) return nativeHero(room, ctx);
-  const stack = [mushroomHero(room, ctx)];
-  if (ctx.opts.sparklines && ctx.caps.has("mini-graph-card")) {
-    stack.push(miniGraph(room, ctx));
+/* ------------------------------------------------------------ the buttons */
+
+/* Two per room. "Sensors" reveals every member; "Offline" reveals only the
+ * dark ones. Both are plain toggles on switches the integration owns, so the
+ * label can state the count live and the reveal survives a page load. */
+function revealButton(room, ctx, kind) {
+  const toggle = kind === "offline" ? ctx.toggleOffline : ctx.toggleSensors;
+  if (!toggle) return null;
+  const offlineCount =
+    `{% set o = state_attr('${room.avg}', 'offline') %}` +
+    `{% set mc = state_attr('${room.avg}', 'member_count') | int(0) %}` +
+    `{% set rp = state_attr('${room.avg}', 'reporting') | int(0) %}` +
+    `{% set n = (o | count) if o is not none else (mc - rp) %}`;
+  const label =
+    kind === "offline"
+      ? offlineCount +
+        `{% if is_state('${toggle}', 'on') %}Hide offline` +
+        `{% else %}{{ n }} offline{% endif %}`
+      : coverageExpr(room.avg) +
+        `{% if is_state('${toggle}', 'on') %}Hide sensors` +
+        `{% else %}{{ mc }} sensor{{ 's' if mc != 1 else '' }}{% endif %}`;
+  const icon =
+    kind === "offline"
+      ? `{% if is_state('${toggle}', 'on') %}mdi:eye-off-outline{% else %}mdi:lan-disconnect{% endif %}`
+      : `{% if is_state('${toggle}', 'on') %}mdi:eye-off-outline{% else %}mdi:format-list-bulleted{% endif %}`;
+  const color =
+    kind === "offline"
+      ? `{% if is_state('${toggle}', 'on') %}grey{% else %}orange{% endif %}`
+      : `{% if is_state('${toggle}', 'on') %}grey{% else %}blue{% endif %}`;
+
+  // The offline button only exists while that room actually has a dark
+  // member — evaluated live, never from a generate-time snapshot.
+  const visibility =
+    kind === "offline" && room.members.length
+      ? [
+          {
+            condition: "or",
+            conditions: room.members.map((m) => ({
+              condition: "state",
+              entity: m.id,
+              state: OFFLINE,
+            })),
+          },
+        ]
+      : undefined;
+
+  if (ctx.caps.has("mushroom-template-card")) {
+    const card = {
+      type: "custom:mushroom-template-card",
+      entity: toggle,
+      primary: label,
+      icon,
+      icon_color: color,
+      tap_action: { action: "toggle" },
+      grid_options: { columns: 6 },
+    };
+    if (visibility) card.visibility = visibility;
+    return withGlass(card, ctx, {
+      inner: GLASS_PILL_TEXT,
+      radius: 999,
+      tint: 46,
+      lift: 0.6,
+    });
   }
-  if (stack.length > 1 && ctx.caps.has("stack-in-card")) {
-    return [
-      {
-        type: "custom:stack-in-card",
-        mode: "vertical",
-        grid_options: grid,
-        cards: stack,
-      },
-    ];
-  }
-  return stack.map((card) => ({ ...card, grid_options: grid }));
+  const card = {
+    type: "tile",
+    entity: toggle,
+    name: kind === "offline" ? "Offline" : "Sensors",
+    icon: kind === "offline" ? "mdi:lan-disconnect" : "mdi:format-list-bulleted",
+    hide_state: true,
+    tap_action: { action: "toggle" },
+    grid_options: { columns: 6 },
+  };
+  if (visibility) card.visibility = visibility;
+  return withGlass(card, ctx, { radius: 999, tint: 46, lift: 0.6 });
 }
 
-/* ---------------------------------------------------------- member tiles */
+/* ------------------------------------------------------------ member tiles */
 
+/* A reporting member shows when the Sensors button is on; a dark one shows
+ * when the Offline button is on. Both conditions are live, so a sensor that
+ * dies while the page is open moves from one button to the other on its own. */
 function memberVisibility(member, ctx) {
-  if (!ctx.toggle) return null;
-  return [
-    {
-      condition: "or",
+  const conditions = [];
+  if (ctx.toggleSensors) {
+    conditions.push({ condition: "state", entity: ctx.toggleSensors, state: "on" });
+  }
+  if (ctx.toggleOffline) {
+    conditions.push({
+      condition: "and",
       conditions: [
-        { condition: "state", entity: member.id, state_not: OFFLINE },
-        { condition: "state", entity: ctx.toggle, state: "on" },
+        { condition: "state", entity: ctx.toggleOffline, state: "on" },
+        { condition: "state", entity: member.id, state: OFFLINE },
       ],
-    },
-  ];
-}
-
-/* °C member inside a °F average: convert live, in Jinja, and show both. */
-function conversionSecondary(member, targetUnit) {
-  const e = member.id;
-  const expression =
-    targetUnit === "°F"
-      ? `(v | float(0) * 1.8 + 32) | round(1)`
-      : `((v | float(0) - 32) / 1.8) | round(1)`;
-  return (
-    `{% set v = states('${e}') %}` +
-    `{% if v in ['unavailable', 'unknown'] or not is_number(v) %}no data` +
-    `{% else %}{{ ${expression} }} ${targetUnit} ` +
-    `({{ v | float(0) | round(1) }} ${member.unit}){% endif %}`
-  );
+    });
+  }
+  if (!conditions.length) return undefined;
+  return [{ condition: "or", conditions }];
 }
 
 function memberTile(member, room, ctx) {
-  const mismatched =
-    member.unit && room.unit && member.unit !== room.unit &&
-    ["°C", "°F"].includes(member.unit) && ["°C", "°F"].includes(room.unit);
+  const mismatched = member.unit && room.unit && member.unit !== room.unit;
+  const card = {
+    type: "tile",
+    entity: member.id,
+    name: mismatched ? `${member.name} (${member.unit})` : member.name,
+    state_content: ["state", "last_changed"],
+    grid_options: { columns: "full" },
+  };
   const visibility = memberVisibility(member, ctx);
-  let card;
-  if (mismatched && ctx.caps.has("mushroom-template-card")) {
-    card = {
-      type: "custom:mushroom-template-card",
-      entity: member.id,
-      primary: member.name,
-      secondary: conversionSecondary(member, room.unit),
-      icon: "mdi:thermometer",
-      tap_action: { action: "more-info" },
-    };
-  } else {
-    card = {
-      type: "tile",
-      entity: member.id,
-      name: mismatched ? `${member.name} (${member.unit})` : member.name,
-      state_content: ["state", "last_changed"],
-    };
-  }
   if (visibility) card.visibility = visibility;
-  return card;
+  return withGlass(card, ctx, { radius: 16, tint: 40, lift: 0.5 });
 }
 
-function excludedTile(member) {
-  return {
+function excludedTile(member, ctx) {
+  const card = {
     type: "tile",
     entity: member.id,
     name: member.name,
     icon: "mdi:sigma-lower",
     color: "disabled",
-    vertical: true,
-    state_content: ["state"],
+    state_content: ["state", "last_changed"],
+    grid_options: { columns: "full" },
   };
+  if (ctx.toggleSensors) {
+    card.visibility = [
+      { condition: "state", entity: ctx.toggleSensors, state: "on" },
+    ];
+  }
+  return withGlass(card, ctx, { radius: 16, tint: 40, lift: 0.5 });
 }
 
-/* The reveal control, shown only while this room hides something. */
-function revealTile(room, ctx) {
-  const anyOffline = room.members.map((m) => ({
-    condition: "state",
-    entity: m.id,
-    state: OFFLINE,
-  }));
-  return {
-    type: "tile",
-    entity: ctx.toggle,
-    name: "Offline sensors",
-    icon: "mdi:lan-disconnect",
-    color: "grey",
-    hide_state: true,
-    tap_action: { action: "toggle" },
-    visibility: [{ condition: "or", conditions: anyOffline }],
-  };
-}
+/* ---------------------------------------------------------------- section */
 
-/* Entity badges only — button heading badges are too new to rely on here. */
-function revealBadges(room, ctx) {
-  const anyOffline = room.members.map((m) => ({
-    condition: "state",
-    entity: m.id,
-    state: OFFLINE,
-  }));
-  // Never gate on generate-time offline status: generate() runs once per page
-  // load, so a member that dies later must still be able to surface itself.
-  // The visibility conditions below are evaluated live and do that on their own.
-  if (!ctx.toggle || !room.members.length) return [];
-  return [
+/* One section per area: the name, the temperature, the two buttons, then the
+ * sensors themselves waiting behind those buttons. */
+function roomSection(room, ctx) {
+  const cards = [
     {
-      type: "entity",
-      entity: ctx.toggle,
-      name: "Offline",
-      icon: "mdi:lan-disconnect",
-      color: "grey",
-      show_name: true,
-      tap_action: { action: "toggle" },
-      visibility: [
-        { condition: "or", conditions: anyOffline },
-        { condition: "state", entity: ctx.toggle, state: "off" },
-      ],
-    },
-    {
-      type: "entity",
-      entity: ctx.toggle,
-      name: "Hide offline",
-      icon: "mdi:eye-off-outline",
-      color: "blue",
-      show_name: true,
-      tap_action: { action: "toggle" },
-      visibility: [
-        { condition: "or", conditions: anyOffline },
-        { condition: "state", entity: ctx.toggle, state: "on" },
-      ],
+      type: "heading",
+      heading: room.area,
+      heading_style: "title",
+      icon: room.icon,
     },
   ];
+  const reading = readingCard(room, ctx);
+  cards.push(...(Array.isArray(reading) ? reading : [reading]));
+
+  if (room.members.length) {
+    const sensors = revealButton(room, ctx, "sensors");
+    const offline = revealButton(room, ctx, "offline");
+    if (sensors) cards.push(sensors);
+    if (offline) cards.push(offline);
+    for (const member of room.members) cards.push(memberTile(member, room, ctx));
+  }
+  for (const member of room.excluded) cards.push(excludedTile(member, ctx));
+  return { type: "grid", cards };
 }
 
 /* ----------------------------------------------------------------- status */
@@ -727,111 +776,20 @@ function statusTemplate(insideAreaIds, outdoorAvgIds) {
 
 function statusSection(rooms, ctx) {
   const inside = rooms.filter((r) => r.group === "inside").map((r) => r.areaId);
-  const outdoor = rooms
-    .filter((r) => r.group === "outdoors")
-    .map((r) => r.avg);
+  const outdoor = rooms.filter((r) => r.group === "outdoors").map((r) => r.avg);
+  const card = {
+    type: "markdown",
+    content: statusTemplate(inside, outdoor),
+    grid_options: { columns: "full" },
+  };
   return {
     type: "grid",
     column_span: 3,
-    cards: [
-      {
-        type: "heading",
-        heading: "Status",
-        heading_style: "title",
-        icon: "mdi:heart-pulse",
-        tap_action: {
-          action: "navigate",
-          navigation_path: `/${ctx.opts.dashboard}/trends`,
-        },
-      },
-      {
-        type: "markdown",
-        content: statusTemplate(inside, outdoor),
-        grid_options: { columns: "full" },
-      },
-    ],
+    cards: [withGlass(card, ctx, { tint: 52 })],
   };
 }
 
 /* ------------------------------------------------------------------ views */
-
-function groupSections(rooms, ctx, cardsFor) {
-  const sections = [];
-  for (const group of GROUPS) {
-    const members = rooms.filter((room) => room.group === group.id);
-    if (!members.length) continue;
-    const cards = [
-      {
-        type: "heading",
-        heading: group.title,
-        heading_style: "title",
-        icon: group.icon,
-      },
-    ];
-    for (const room of members) cards.push(...cardsFor(room));
-    // Inside holds most of the house, so on a 3-column desktop it would tower
-    // over two short columns and leave the fold half empty. Let the biggest
-    // group take two columns once it is clearly the heaviest.
-    const section = { type: "grid", cards };
-    const sizes = GROUPS.map((g) => rooms.filter((r) => r.group === g.id).length);
-    const heaviest = Math.max(...sizes);
-    const soleHeaviest = sizes.filter((n) => n === heaviest).length === 1;
-    if (
-      soleHeaviest &&
-      members.length === heaviest &&
-      members.length >= rooms.length - members.length
-    ) {
-      section.column_span = 2;
-    }
-    sections.push(section);
-  }
-  return sections;
-}
-
-function viewBadges(rooms, ctx) {
-  const badges = [];
-  for (const room of rooms.filter((r) => r.group === "outdoors")) {
-    badges.push({
-      type: "entity",
-      entity: room.avg,
-      name: room.area,
-      icon: room.icon,
-      show_name: true,
-    });
-  }
-  // One badge per affected room, each visible only on ITS OWN members going
-  // dark. A single "worst room" badge with a dashboard-wide visibility OR would
-  // keep naming the room it picked at generate time while pointing at another
-  // room's outage — the one element on the first screen that could state
-  // something false. Capped so a bad day cannot flood the header.
-  const affected = rooms
-    .map((room) => ({ room, dark: room.members.filter((m) => m.offline) }))
-    .filter((entry) => entry.dark.length)
-    .sort((a, b) => b.dark.length - a.dark.length)
-    .slice(0, MAX_OFFLINE_BADGES);
-  for (const { room } of affected) {
-    badges.push({
-      type: "entity",
-      entity: room.avg,
-      name: room.area,
-      icon: "mdi:lan-disconnect",
-      color: "red",
-      show_name: true,
-      tap_action: roomNavigation(room, ctx.opts),
-      visibility: [
-        {
-          condition: "or",
-          conditions: room.members.map((member) => ({
-            condition: "state",
-            entity: member.id,
-            state: OFFLINE,
-          })),
-        },
-      ],
-    });
-  }
-  return badges;
-}
 
 function roomsView(deviceClass, rooms, ctx) {
   const meta = CLASS_META[deviceClass] || {
@@ -840,144 +798,73 @@ function roomsView(deviceClass, rooms, ctx) {
     icon: "mdi:chart-box-outline",
   };
   const sections = [statusSection(rooms, ctx)].concat(
-    groupSections(rooms, ctx, (room) => heroCards(room, ctx))
+    rooms.map((room) => roomSection(room, ctx))
   );
-  const badges = viewBadges(rooms, ctx);
   return {
     title: meta.title,
     path: meta.path,
     icon: meta.icon,
     type: "sections",
     max_columns: 3,
-    top_margin: true,
-    dense_section_placement: false,
-    ...(badges.length ? { badges } : {}),
     sections,
   };
 }
 
-function roomSubview(room, ctx) {
-  const badges = revealBadges(room, ctx);
+function trendsView(rooms, ctx) {
   const sections = [
     {
       type: "grid",
+      column_span: 3,
       cards: [
         {
           type: "heading",
-          heading: room.area,
+          heading: `All rooms · hourly mean · ${ctx.opts.statsDays} days`,
           heading_style: "title",
-          icon: room.icon,
-          ...(badges.length ? { badges } : {}),
+          icon: "mdi:chart-line",
         },
-        ...heroCards(room, ctx),
+        withGlass(
+          {
+            type: "statistics-graph",
+            entities: rooms.map((room) => room.avg),
+            stat_types: ["mean"],
+            period: "hour",
+            days_to_show: ctx.opts.statsDays,
+            chart_type: "line",
+            grid_options: { columns: "full" },
+          },
+          ctx,
+          { tint: 52 }
+        ),
       ],
     },
   ];
-
-  if (room.members.length) {
-    const cards = [
-      {
-        type: "heading",
-        heading_style: "subtitle",
-        heading: `Sensors (${room.members.length})`,
-        icon: "mdi:thermometer",
-      },
-      ...room.members.map((member) => memberTile(member, room, ctx)),
-    ];
-    // Emitted whenever the room has members at all — revealTile carries its own
-    // live OR-over-members visibility, so it appears exactly when something is
-    // actually offline, including members that only go dark after page load.
-    if (ctx.toggle) cards.push(revealTile(room, ctx));
-    sections.push({ type: "grid", cards });
-  }
-
-  if (room.excluded.length) {
+  for (const room of rooms) {
     sections.push({
       type: "grid",
       cards: [
         {
           type: "heading",
+          heading: room.area,
           heading_style: "subtitle",
-          heading: `Not in average (${room.excluded.length})`,
-          icon: "mdi:sigma",
+          icon: room.icon,
         },
-        ...room.excluded.map((member) => excludedTile(member)),
+        withGlass(
+          {
+            type: "statistics-graph",
+            entities: [room.avg],
+            stat_types: ["min", "mean", "max"],
+            period: "hour",
+            days_to_show: ctx.opts.statsDays,
+            chart_type: "line",
+            hide_legend: true,
+            grid_options: { columns: "full" },
+          },
+          ctx,
+          { tint: 48 }
+        ),
       ],
     });
   }
-
-  sections.push({
-    type: "grid",
-    cards: [
-      {
-        type: "heading",
-        heading_style: "subtitle",
-        heading: `Last ${ctx.opts.hours} h`,
-        icon: "mdi:chart-line",
-      },
-      {
-        type: "history-graph",
-        hours_to_show: ctx.opts.hours,
-        entities: [{ entity: room.avg }].concat(
-          room.members
-            .filter((member) => member.reporting)
-            .map((member) => ({ entity: member.id, name: member.name }))
-        ),
-        grid_options: { columns: "full" },
-      },
-    ],
-  });
-
-  return {
-    title: room.area,
-    path: roomPath(room),
-    icon: room.icon,
-    subview: true,
-    type: "sections",
-    max_columns: 2,
-    sections,
-  };
-}
-
-/* Long-term statistics only: one unit per chart by construction, and a core
- * card carries no dependency risk on the longest-lived view. */
-function trendsView(rooms, ctx) {
-  const overview = {
-    type: "grid",
-    column_span: 3,
-    cards: [
-      {
-        type: "heading",
-        heading: `All rooms · hourly mean · ${ctx.opts.statsDays} days`,
-        heading_style: "title",
-        icon: "mdi:chart-line",
-      },
-      {
-        type: "statistics-graph",
-        entities: rooms.map((room) => room.avg),
-        stat_types: ["mean"],
-        period: "hour",
-        days_to_show: ctx.opts.statsDays,
-        chart_type: "line",
-        grid_options: { columns: "full" },
-      },
-    ],
-  };
-  const sections = [overview].concat(
-    groupSections(rooms, ctx, (room) => [
-      {
-        type: "statistics-graph",
-        title: room.area,
-        entities: [room.avg],
-        stat_types: ["min", "mean", "max"],
-        period: "hour",
-        days_to_show: ctx.opts.statsDays,
-        chart_type: "line",
-        hide_legend: true,
-        grid_options: { columns: 6 },
-      },
-    ])
-  );
   return {
     title: "Trends",
     path: "trends",
@@ -991,10 +878,12 @@ function trendsView(rooms, ctx) {
 class AreaTemperaturesStrategy {
   static async generate(config, hass) {
     const opts = readOptions(config);
+    const caps = await capabilities(opts);
     const ctx = {
       opts,
-      caps: await capabilities(opts),
-      toggle: resolveToggle(hass),
+      caps,
+      toggleSensors: resolveToggle(hass, SENSOR_TOGGLES),
+      toggleOffline: resolveToggle(hass, OFFLINE_TOGGLES),
     };
 
     const classes = new Set();
@@ -1017,7 +906,6 @@ class AreaTemperaturesStrategy {
       if (!rooms.length) continue;
       views.push(roomsView(deviceClass, rooms, ctx));
       if (deviceClass === "temperature") views.push(trendsView(rooms, ctx));
-      for (const room of rooms) views.push(roomSubview(room, ctx));
     }
     if (!views.length) {
       views.push({
