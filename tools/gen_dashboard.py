@@ -40,9 +40,11 @@ EXCLUDE_LABEL = "exclude-average"
 STATUS_MARKDOWN = """\
 {% set ns = namespace(rows=[]) %}
 {% for e in integration_entities('area_averages') | sort %}
+{% if e.startswith('sensor.') %}
 {% for i in state_attr(e, 'issues') or [] %}
 {% set ns.rows = ns.rows + [(area_name(e) or e) ~ ' — ' ~ i] %}
 {% endfor %}
+{% endif %}
 {% endfor %}
 {% if ns.rows %}
 #### ⚠️ {{ ns.rows | count }} sensor issue{{ 's' if ns.rows | count > 1 else '' }}
@@ -106,7 +108,10 @@ def build_config(rooms):
                 "name": "Room average",
                 "icon": "mdi:thermometer-auto",
                 "color": "deep-orange",
-                "state_content": ["state", "issue"],
+                # `issue` is now a joined list of every offline/stale/battery
+                # row, far too long for a tile; `summary` is the one-phrase
+                # coverage string ("2 of 9 sensors").
+                "state_content": ["state", "summary"],
                 "grid_options": {"columns": "full"},
             },
         ]

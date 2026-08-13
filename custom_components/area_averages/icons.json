@@ -1,0 +1,12 @@
+{
+  "entity": {
+    "sensor": {
+      "temperature": { "default": "mdi:thermometer-auto" },
+      "humidity": { "default": "mdi:water-percent" },
+      "pressure": { "default": "mdi:gauge" },
+      "carbon_dioxide": { "default": "mdi:molecule-co2" },
+      "illuminance": { "default": "mdi:brightness-5" },
+      "pm25": { "default": "mdi:blur" }
+    }
+  }
+}

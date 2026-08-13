@@ -1,0 +1,1775 @@
+{
+ "areas": {
+  "3d_printer": {
+   "area_id": "3d_printer",
+   "floor_id": null,
+   "icon": "mdi:printer-3d-nozzle",
+   "labels": [
+    "3d_printer"
+   ],
+   "name": "3D Printer"
+  },
+  "bedroom": {
+   "area_id": "bedroom",
+   "floor_id": "main",
+   "icon": "mdi:bed",
+   "labels": [],
+   "name": "Bedroom"
+  },
+  "bench": {
+   "area_id": "bench",
+   "floor_id": null,
+   "icon": "mdi:bench",
+   "labels": [
+    "bench"
+   ],
+   "name": "Bench"
+  },
+  "fridge": {
+   "area_id": "fridge",
+   "floor_id": null,
+   "icon": "mdi:fridge",
+   "labels": [],
+   "name": "Fridge"
+  },
+  "kitchen": {
+   "area_id": "kitchen",
+   "floor_id": "main",
+   "icon": "mdi:chef-hat",
+   "labels": [],
+   "name": "Kitchen"
+  },
+  "kittens": {
+   "area_id": "kittens",
+   "floor_id": null,
+   "icon": "mdi:cat",
+   "labels": [],
+   "name": "Kittens"
+  },
+  "living_room": {
+   "area_id": "living_room",
+   "floor_id": "main",
+   "icon": "mdi:sofa",
+   "labels": [],
+   "name": "Living Room"
+  },
+  "master_bathroom": {
+   "area_id": "master_bathroom",
+   "floor_id": null,
+   "icon": "mdi:toilet",
+   "labels": [],
+   "name": "Master Bathroom"
+  },
+  "office": {
+   "area_id": "office",
+   "floor_id": "main",
+   "icon": "mdi:desk",
+   "labels": [],
+   "name": "Office"
+  },
+  "outside": {
+   "area_id": "outside",
+   "floor_id": null,
+   "icon": "mdi:sun-thermometer-outline",
+   "labels": [],
+   "name": "Outside"
+  },
+  "weather": {
+   "area_id": "weather",
+   "floor_id": null,
+   "icon": "mdi:weather-cloudy",
+   "labels": [],
+   "name": "Weather"
+  }
+ },
+ "devices": {
+  "0b8c7c6379a9bf9999256f08bc7fb44f": {
+   "area_id": "bench",
+   "id": "0b8c7c6379a9bf9999256f08bc7fb44f",
+   "name": "H5105 455D",
+   "name_by_user": "Govee e-ink Hygrometer (455D)"
+  },
+  "0c3ca5bdf063d0c9cae872a2299b3f37": {
+   "area_id": "bench",
+   "id": "0c3ca5bdf063d0c9cae872a2299b3f37",
+   "name": "TP359S (5848)",
+   "name_by_user": null
+  },
+  "0cd81743d77a8a403ee0cc44c6fda1e8": {
+   "area_id": "living_room",
+   "id": "0cd81743d77a8a403ee0cc44c6fda1e8",
+   "name": "lr-plant-derry",
+   "name_by_user": null
+  },
+  "0f10ba017e1a022824622723ca70ce0b": {
+   "area_id": "living_room",
+   "id": "0f10ba017e1a022824622723ca70ce0b",
+   "name": "Livingroom Echo",
+   "name_by_user": null
+  },
+  "0fde25bda20cce67771bee10e3ea57f8": {
+   "area_id": "3d_printer",
+   "id": "0fde25bda20cce67771bee10e3ea57f8",
+   "name": "X1C_00M09D550501125",
+   "name_by_user": "Altai"
+  },
+  "1cf4cac878b371233e578ed2af408b01": {
+   "area_id": "outside",
+   "id": "1cf4cac878b371233e578ed2af408b01",
+   "name": "ITH-11-B 12B4",
+   "name_by_user": "Outside ITH-11-B 12B4"
+  },
+  "24655fd9e6ea9cf7a9e246036d492f9a": {
+   "area_id": "bench",
+   "id": "24655fd9e6ea9cf7a9e246036d492f9a",
+   "name": "eMotion Ultra (e04b4101a3b0)",
+   "name_by_user": null
+  },
+  "2e949d822fbfb78297e2e4296be5c004": {
+   "area_id": "weather",
+   "id": "2e949d822fbfb78297e2e4296be5c004",
+   "name": "Long Beach-Route 710 Near Road, Los Angeles, California",
+   "name_by_user": "Long Beach (WAQI)"
+  },
+  "2f3670f772bb06e47746547aee2adbce": {
+   "area_id": "bedroom",
+   "id": "2f3670f772bb06e47746547aee2adbce",
+   "name": "Shakti",
+   "name_by_user": null
+  },
+  "47123ae43e10993c5ef9db9d49b510cc": {
+   "area_id": "bedroom",
+   "id": "47123ae43e10993c5ef9db9d49b510cc",
+   "name": "Bedroom Echo",
+   "name_by_user": null
+  },
+  "504dab4262158c2b2896c62a373e6a7d": {
+   "area_id": "bedroom",
+   "id": "504dab4262158c2b2896c62a373e6a7d",
+   "name": "H5075 2958",
+   "name_by_user": "Bedroom H5075 2958"
+  },
+  "54c229baa2e9a0682f24245d49301119": {
+   "area_id": "kittens",
+   "id": "54c229baa2e9a0682f24245d49301119",
+   "name": "TP357S",
+   "name_by_user": "Kitten Room Thermometer"
+  },
+  "551a0f35a2e5d5c3e06abbbe5a011e51": {
+   "area_id": "bench",
+   "id": "551a0f35a2e5d5c3e06abbbe5a011e51",
+   "name": "Apollo MSR-2 b22324",
+   "name_by_user": null
+  },
+  "55fe013c24eb6aa473cec47d6881bd05": {
+   "area_id": "office",
+   "id": "55fe013c24eb6aa473cec47d6881bd05",
+   "name": "A4C138244934",
+   "name_by_user": "ATC Nimbus"
+  },
+  "70a34218e265b0675b0c6076000d4364": {
+   "area_id": "kitchen",
+   "id": "70a34218e265b0675b0c6076000d4364",
+   "name": "H5074 986B",
+   "name_by_user": "Govee Square Hygrometer 986B"
+  },
+  "901193ccaf672ab233ee617125bad840": {
+   "area_id": "fridge",
+   "id": "901193ccaf672ab233ee617125bad840",
+   "name": "51086566",
+   "name_by_user": "Fridge Probe"
+  },
+  "906ec259e3693a5c0f9c8190e6602e0e": {
+   "area_id": "bench",
+   "id": "906ec259e3693a5c0f9c8190e6602e0e",
+   "name": "waveshare-test",
+   "name_by_user": null
+  },
+  "92b6137e62de002633476beed53ea16a": {
+   "area_id": "office",
+   "id": "92b6137e62de002633476beed53ea16a",
+   "name": "sensorbox",
+   "name_by_user": null
+  },
+  "a915799959ff6a57d10e1d4dd37d7a56": {
+   "area_id": "living_room",
+   "id": "a915799959ff6a57d10e1d4dd37d7a56",
+   "name": "otter",
+   "name_by_user": null
+  },
+  "ab3c401c4c8c8809cdbb8435a41bb3e8": {
+   "area_id": "kitchen",
+   "id": "ab3c401c4c8c8809cdbb8435a41bb3e8",
+   "name": "kitchen_thermometer",
+   "name_by_user": null
+  },
+  "b0a1688e94c96941822d3edbe79b6356": {
+   "area_id": "kittens",
+   "id": "b0a1688e94c96941822d3edbe79b6356",
+   "name": "Lionel",
+   "name_by_user": null
+  },
+  "b13a10470b1182be706197d778e51556": {
+   "area_id": "living_room",
+   "id": "b13a10470b1182be706197d778e51556",
+   "name": "Otter",
+   "name_by_user": null
+  },
+  "b1e50b35aace2eb133452af80ec545c9": {
+   "area_id": "office",
+   "id": "b1e50b35aace2eb133452af80ec545c9",
+   "name": "H5074 5275",
+   "name_by_user": "Office Hygrometer (5275)"
+  },
+  "b4ac8e8d630d3e9e3ac5dfdb7f05354c": {
+   "area_id": "bench",
+   "id": "b4ac8e8d630d3e9e3ac5dfdb7f05354c",
+   "name": "H5075 5212",
+   "name_by_user": "Snewy"
+  },
+  "b4f90f196160c6ac0ce23a0bfd9c9667": {
+   "area_id": "bedroom",
+   "id": "b4f90f196160c6ac0ce23a0bfd9c9667",
+   "name": "mmwave_stick1",
+   "name_by_user": null
+  },
+  "bb6f7ed32f07e1457e04e47840fe225e": {
+   "area_id": "office",
+   "id": "bb6f7ed32f07e1457e04e47840fe225e",
+   "name": "Hippocrates",
+   "name_by_user": null
+  },
+  "bf54b5478ef70e8f19824f072bf06aad": {
+   "area_id": "living_room",
+   "id": "bf54b5478ef70e8f19824f072bf06aad",
+   "name": "Derry",
+   "name_by_user": null
+  },
+  "c4dd7c425a7b2731a5a6e9fe3fc457ae": {
+   "area_id": "kitchen",
+   "id": "c4dd7c425a7b2731a5a6e9fe3fc457ae",
+   "name": "ITH-11-B 0E38",
+   "name_by_user": "Fridge Thermometer"
+  },
+  "c7a554fecbfb29bd14d72aabedcc3e73": {
+   "area_id": "bedroom",
+   "id": "c7a554fecbfb29bd14d72aabedcc3e73",
+   "name": "Pothos",
+   "name_by_user": null
+  },
+  "c7e64660ad81c100fb3385b5d850fa46": {
+   "area_id": "bench",
+   "id": "c7e64660ad81c100fb3385b5d850fa46",
+   "name": "esp32-thermal",
+   "name_by_user": null
+  },
+  "d9a8389912edc6064629d434b5940479": {
+   "area_id": "master_bathroom",
+   "id": "d9a8389912edc6064629d434b5940479",
+   "name": "Misty",
+   "name_by_user": null
+  },
+  "e88c4f2abe9f4875829da6d19280bb59": {
+   "area_id": "bench",
+   "id": "e88c4f2abe9f4875829da6d19280bb59",
+   "name": "bermuda_a4_c1_38_24_49_34",
+   "name_by_user": null
+  },
+  "f0718eeb1562d8f503aff9d86bda06bb": {
+   "area_id": "living_room",
+   "id": "f0718eeb1562d8f503aff9d86bda06bb",
+   "name": "ITH-11-B 0090",
+   "name_by_user": "Living Room ITH-11-B 0090"
+  },
+  "f09223414cb58fc661dca909e26f8ac5": {
+   "area_id": "office",
+   "id": "f09223414cb58fc661dca909e26f8ac5",
+   "name": "Pepper PLT-1",
+   "name_by_user": "Pepper PLT-1"
+  },
+  "f3b8926bbf448073751b08213c2b78f3": {
+   "area_id": "office",
+   "id": "f3b8926bbf448073751b08213c2b78f3",
+   "name": "H5105 1B80",
+   "name_by_user": "office_temp1_1B80"
+  },
+  "f5e7b8f82ed5285fdc9e98c329405833": {
+   "area_id": "weather",
+   "id": "f5e7b8f82ed5285fdc9e98c329405833",
+   "name": "OpenWeatherMap",
+   "name_by_user": "Long Beach Weather"
+  },
+  "fd94c6c31641a739d73407bc31851c73": {
+   "area_id": "bedroom",
+   "id": "fd94c6c31641a739d73407bc31851c73",
+   "name": "ITH-11-B 0440",
+   "name_by_user": "Bedroom ITH-11-B 0440"
+  },
+  "ff882b808118c981a8a11dab717ca9ec": {
+   "area_id": "office",
+   "id": "ff882b808118c981a8a11dab717ca9ec",
+   "name": "Hippocrates_Plant",
+   "name_by_user": "Hippocrates Soil Sensor"
+  }
+ },
+ "entities": {
+  "sensor.3d_printer_average_temperature": {
+   "area_id": "3d_printer",
+   "device_id": null,
+   "entity_id": "sensor.3d_printer_average_temperature",
+   "labels": [],
+   "platform": "area_averages"
+  },
+  "sensor.a4c138244934_ble_temperature_a4c138244934": {
+   "area_id": "office",
+   "device_id": "55fe013c24eb6aa473cec47d6881bd05",
+   "entity_id": "sensor.a4c138244934_ble_temperature_a4c138244934",
+   "labels": [],
+   "platform": "ble_monitor"
+  },
+  "sensor.altai_bed_target_temperature": {
+   "area_id": "3d_printer",
+   "device_id": "0fde25bda20cce67771bee10e3ea57f8",
+   "entity_id": "sensor.altai_bed_target_temperature",
+   "labels": [
+    "exclude_average"
+   ],
+   "platform": "bambu_lab"
+  },
+  "sensor.altai_bed_temperature": {
+   "area_id": "3d_printer",
+   "device_id": "0fde25bda20cce67771bee10e3ea57f8",
+   "entity_id": "sensor.altai_bed_temperature",
+   "labels": [],
+   "platform": "bambu_lab"
+  },
+  "sensor.altai_chamber_temperature": {
+   "area_id": "3d_printer",
+   "device_id": "0fde25bda20cce67771bee10e3ea57f8",
+   "entity_id": "sensor.altai_chamber_temperature",
+   "labels": [],
+   "platform": "bambu_lab"
+  },
+  "sensor.altai_nozzle_target_temperature": {
+   "area_id": "3d_printer",
+   "device_id": "0fde25bda20cce67771bee10e3ea57f8",
+   "entity_id": "sensor.altai_nozzle_target_temperature",
+   "labels": [
+    "exclude_average"
+   ],
+   "platform": "bambu_lab"
+  },
+  "sensor.altai_nozzle_temperature": {
+   "area_id": "3d_printer",
+   "device_id": "0fde25bda20cce67771bee10e3ea57f8",
+   "entity_id": "sensor.altai_nozzle_temperature",
+   "labels": [],
+   "platform": "bambu_lab"
+  },
+  "sensor.apollo_msr_2_b22324_dps310_temperature": {
+   "area_id": "bench",
+   "device_id": "551a0f35a2e5d5c3e06abbbe5a011e51",
+   "entity_id": "sensor.apollo_msr_2_b22324_dps310_temperature",
+   "labels": [],
+   "platform": "esphome"
+  },
+  "sensor.apollo_plt_1_a84e64_air_temperature": {
+   "area_id": "office",
+   "device_id": "f09223414cb58fc661dca909e26f8ac5",
+   "entity_id": "sensor.apollo_plt_1_a84e64_air_temperature",
+   "labels": [],
+   "platform": "esphome"
+  },
+  "sensor.atc_4934_temperature": {
+   "area_id": "bench",
+   "device_id": "e88c4f2abe9f4875829da6d19280bb59",
+   "entity_id": "sensor.atc_4934_temperature",
+   "labels": [],
+   "platform": "bthome"
+  },
+  "sensor.bedroom_average_temperature": {
+   "area_id": "bedroom",
+   "device_id": null,
+   "entity_id": "sensor.bedroom_average_temperature",
+   "labels": [],
+   "platform": "area_averages"
+  },
+  "sensor.bedroom_echo_temperature": {
+   "area_id": "bedroom",
+   "device_id": "47123ae43e10993c5ef9db9d49b510cc",
+   "entity_id": "sensor.bedroom_echo_temperature",
+   "labels": [],
+   "platform": "alexa_media"
+  },
+  "sensor.bedroom_eink_temperature": {
+   "area_id": "bench",
+   "device_id": "0b8c7c6379a9bf9999256f08bc7fb44f",
+   "entity_id": "sensor.bedroom_eink_temperature",
+   "labels": [
+    "bluetooth"
+   ],
+   "platform": "govee_ble"
+  },
+  "sensor.bedroom_ith_11_b_0440_temperature": {
+   "area_id": "bedroom",
+   "device_id": "fd94c6c31641a739d73407bc31851c73",
+   "entity_id": "sensor.bedroom_ith_11_b_0440_temperature",
+   "labels": [
+    "hygrometer",
+    "bluetooth"
+   ],
+   "platform": "inkbird"
+  },
+  "sensor.bench_average_temperature": {
+   "area_id": "bench",
+   "device_id": null,
+   "entity_id": "sensor.bench_average_temperature",
+   "labels": [],
+   "platform": "area_averages"
+  },
+  "sensor.derry_temperature": {
+   "area_id": "living_room",
+   "device_id": "bf54b5478ef70e8f19824f072bf06aad",
+   "entity_id": "sensor.derry_temperature",
+   "labels": [],
+   "platform": "plant"
+  },
+  "sensor.esp32_thermal_ambient": {
+   "area_id": "bench",
+   "device_id": "c7e64660ad81c100fb3385b5d850fa46",
+   "entity_id": "sensor.esp32_thermal_ambient",
+   "labels": [],
+   "platform": "esphome"
+  },
+  "sensor.esp32_thermal_object": {
+   "area_id": "bench",
+   "device_id": "c7e64660ad81c100fb3385b5d850fa46",
+   "entity_id": "sensor.esp32_thermal_object",
+   "labels": [],
+   "platform": "esphome"
+  },
+  "sensor.fridge_average_temperature": {
+   "area_id": "fridge",
+   "device_id": null,
+   "entity_id": "sensor.fridge_average_temperature",
+   "labels": [],
+   "platform": "area_averages"
+  },
+  "sensor.fridge_probe_temperature": {
+   "area_id": "fridge",
+   "device_id": "901193ccaf672ab233ee617125bad840",
+   "entity_id": "sensor.fridge_probe_temperature",
+   "labels": [],
+   "platform": "govee_ble"
+  },
+  "sensor.fridge_t": {
+   "area_id": "kitchen",
+   "device_id": "70a34218e265b0675b0c6076000d4364",
+   "entity_id": "sensor.fridge_t",
+   "labels": [
+    "exclude_average"
+   ],
+   "platform": "govee_ble"
+  },
+  "sensor.h5075_2958_temperature": {
+   "area_id": "bedroom",
+   "device_id": "504dab4262158c2b2896c62a373e6a7d",
+   "entity_id": "sensor.h5075_2958_temperature",
+   "labels": [],
+   "platform": "govee_ble"
+  },
+  "sensor.hippocrates_plant_temperature": {
+   "area_id": "office",
+   "device_id": "ff882b808118c981a8a11dab717ca9ec",
+   "entity_id": "sensor.hippocrates_plant_temperature",
+   "labels": [],
+   "platform": "mqtt"
+  },
+  "sensor.hippocrates_temperature_2": {
+   "area_id": "office",
+   "device_id": "bb6f7ed32f07e1457e04e47840fe225e",
+   "entity_id": "sensor.hippocrates_temperature_2",
+   "labels": [],
+   "platform": "plant"
+  },
+  "sensor.ith_11_b_0090_temperature": {
+   "area_id": "living_room",
+   "device_id": "f0718eeb1562d8f503aff9d86bda06bb",
+   "entity_id": "sensor.ith_11_b_0090_temperature",
+   "labels": [],
+   "platform": "inkbird"
+  },
+  "sensor.ith_11_b_0e38_temperature": {
+   "area_id": "kitchen",
+   "device_id": "c4dd7c425a7b2731a5a6e9fe3fc457ae",
+   "entity_id": "sensor.ith_11_b_0e38_temperature",
+   "labels": [
+    "exclude_average"
+   ],
+   "platform": "inkbird"
+  },
+  "sensor.kitchen_average_temperature": {
+   "area_id": "kitchen",
+   "device_id": null,
+   "entity_id": "sensor.kitchen_average_temperature",
+   "labels": [],
+   "platform": "area_averages"
+  },
+  "sensor.kitchen_thermometer_temperature": {
+   "area_id": "kitchen",
+   "device_id": "ab3c401c4c8c8809cdbb8435a41bb3e8",
+   "entity_id": "sensor.kitchen_thermometer_temperature",
+   "labels": [],
+   "platform": "mqtt"
+  },
+  "sensor.kitten_room_thermometer_temperature": {
+   "area_id": "kittens",
+   "device_id": "54c229baa2e9a0682f24245d49301119",
+   "entity_id": "sensor.kitten_room_thermometer_temperature",
+   "labels": [],
+   "platform": "thermopro"
+  },
+  "sensor.kittens_average_temperature": {
+   "area_id": "kittens",
+   "device_id": null,
+   "entity_id": "sensor.kittens_average_temperature",
+   "labels": [],
+   "platform": "area_averages"
+  },
+  "sensor.lb_dew_point": {
+   "area_id": "weather",
+   "device_id": "f5e7b8f82ed5285fdc9e98c329405833",
+   "entity_id": "sensor.lb_dew_point",
+   "labels": [],
+   "platform": "openweathermap"
+  },
+  "sensor.lb_feels_like_temperature": {
+   "area_id": "weather",
+   "device_id": "f5e7b8f82ed5285fdc9e98c329405833",
+   "entity_id": "sensor.lb_feels_like_temperature",
+   "labels": [],
+   "platform": "openweathermap"
+  },
+  "sensor.lionel_temperature_2": {
+   "area_id": "kittens",
+   "device_id": "b0a1688e94c96941822d3edbe79b6356",
+   "entity_id": "sensor.lionel_temperature_2",
+   "labels": [],
+   "platform": "plant"
+  },
+  "sensor.living_room_average_temperature": {
+   "area_id": "living_room",
+   "device_id": null,
+   "entity_id": "sensor.living_room_average_temperature",
+   "labels": [],
+   "platform": "area_averages"
+  },
+  "sensor.livingroom_echo_temperature": {
+   "area_id": "living_room",
+   "device_id": "0f10ba017e1a022824622723ca70ce0b",
+   "entity_id": "sensor.livingroom_echo_temperature",
+   "labels": [],
+   "platform": "alexa_media"
+  },
+  "sensor.lnlinkha_e04b4101a3b00000000000009cac0000_t": {
+   "area_id": "bench",
+   "device_id": "24655fd9e6ea9cf7a9e246036d492f9a",
+   "entity_id": "sensor.lnlinkha_e04b4101a3b00000000000009cac0000_t",
+   "labels": [],
+   "platform": "mqtt"
+  },
+  "sensor.long_beach_waqi_temperature": {
+   "area_id": "weather",
+   "device_id": "2e949d822fbfb78297e2e4296be5c004",
+   "entity_id": "sensor.long_beach_waqi_temperature",
+   "labels": [],
+   "platform": "waqi"
+  },
+  "sensor.lr_plant_derry_temperature": {
+   "area_id": "living_room",
+   "device_id": "0cd81743d77a8a403ee0cc44c6fda1e8",
+   "entity_id": "sensor.lr_plant_derry_temperature",
+   "labels": [],
+   "platform": "mqtt"
+  },
+  "sensor.master_bathroom_average_temperature": {
+   "area_id": "master_bathroom",
+   "device_id": null,
+   "entity_id": "sensor.master_bathroom_average_temperature",
+   "labels": [],
+   "platform": "area_averages"
+  },
+  "sensor.misty_temperature_2": {
+   "area_id": "master_bathroom",
+   "device_id": "d9a8389912edc6064629d434b5940479",
+   "entity_id": "sensor.misty_temperature_2",
+   "labels": [],
+   "platform": "plant"
+  },
+  "sensor.mmwave_stick1_temperature": {
+   "area_id": "bedroom",
+   "device_id": "b4f90f196160c6ac0ce23a0bfd9c9667",
+   "entity_id": "sensor.mmwave_stick1_temperature",
+   "labels": [],
+   "platform": "mqtt"
+  },
+  "sensor.office_average_temperature": {
+   "area_id": "office",
+   "device_id": null,
+   "entity_id": "sensor.office_average_temperature",
+   "labels": [],
+   "platform": "area_averages"
+  },
+  "sensor.office_temp": {
+   "area_id": "office",
+   "device_id": "b1e50b35aace2eb133452af80ec545c9",
+   "entity_id": "sensor.office_temp",
+   "labels": [],
+   "platform": "govee_ble"
+  },
+  "sensor.office_temp1": {
+   "area_id": "office",
+   "device_id": "f3b8926bbf448073751b08213c2b78f3",
+   "entity_id": "sensor.office_temp1",
+   "labels": [],
+   "platform": "govee_ble"
+  },
+  "sensor.openweathermap_temperature": {
+   "area_id": "weather",
+   "device_id": "f5e7b8f82ed5285fdc9e98c329405833",
+   "entity_id": "sensor.openweathermap_temperature",
+   "labels": [],
+   "platform": "openweathermap"
+  },
+  "sensor.otter_temp": {
+   "area_id": "living_room",
+   "device_id": "a915799959ff6a57d10e1d4dd37d7a56",
+   "entity_id": "sensor.otter_temp",
+   "labels": [
+    "zigbee"
+   ],
+   "platform": "mqtt"
+  },
+  "sensor.otter_temperature": {
+   "area_id": "living_room",
+   "device_id": "b13a10470b1182be706197d778e51556",
+   "entity_id": "sensor.otter_temperature",
+   "labels": [],
+   "platform": "plant"
+  },
+  "sensor.outside_average_temperature": {
+   "area_id": "outside",
+   "device_id": null,
+   "entity_id": "sensor.outside_average_temperature",
+   "labels": [],
+   "platform": "area_averages"
+  },
+  "sensor.outside_ith_11_b_12b4_temperature": {
+   "area_id": "outside",
+   "device_id": "1cf4cac878b371233e578ed2af408b01",
+   "entity_id": "sensor.outside_ith_11_b_12b4_temperature",
+   "labels": [],
+   "platform": "inkbird"
+  },
+  "sensor.pothos_temperature": {
+   "area_id": "bedroom",
+   "device_id": "c7a554fecbfb29bd14d72aabedcc3e73",
+   "entity_id": "sensor.pothos_temperature",
+   "labels": [],
+   "platform": "plant"
+  },
+  "sensor.sensorbox_aht20_temperature": {
+   "area_id": "office",
+   "device_id": "92b6137e62de002633476beed53ea16a",
+   "entity_id": "sensor.sensorbox_aht20_temperature",
+   "labels": [
+    "exclude_average"
+   ],
+   "platform": "esphome"
+  },
+  "sensor.sensorbox_bmp280_temperature": {
+   "area_id": "office",
+   "device_id": "92b6137e62de002633476beed53ea16a",
+   "entity_id": "sensor.sensorbox_bmp280_temperature",
+   "labels": [
+    "exclude_average"
+   ],
+   "platform": "esphome"
+  },
+  "sensor.sensorbox_scd40_temperature": {
+   "area_id": "office",
+   "device_id": "92b6137e62de002633476beed53ea16a",
+   "entity_id": "sensor.sensorbox_scd40_temperature",
+   "labels": [
+    "exclude_average"
+   ],
+   "platform": "esphome"
+  },
+  "sensor.shakti_temperature": {
+   "area_id": "bedroom",
+   "device_id": "2f3670f772bb06e47746547aee2adbce",
+   "entity_id": "sensor.shakti_temperature",
+   "labels": [],
+   "platform": "plant"
+  },
+  "sensor.snewy_temperature": {
+   "area_id": "bench",
+   "device_id": "b4ac8e8d630d3e9e3ac5dfdb7f05354c",
+   "entity_id": "sensor.snewy_temperature",
+   "labels": [],
+   "platform": "govee_ble"
+  },
+  "sensor.tp359s_5848_temperature": {
+   "area_id": "bench",
+   "device_id": "0c3ca5bdf063d0c9cae872a2299b3f37",
+   "entity_id": "sensor.tp359s_5848_temperature",
+   "labels": [],
+   "platform": "thermopro"
+  },
+  "sensor.waveshare_test_sen55_temperature": {
+   "area_id": "bench",
+   "device_id": "906ec259e3693a5c0f9c8190e6602e0e",
+   "entity_id": "sensor.waveshare_test_sen55_temperature",
+   "labels": [],
+   "platform": "esphome"
+  },
+  "sensor.weather_average_temperature": {
+   "area_id": "weather",
+   "device_id": null,
+   "entity_id": "sensor.weather_average_temperature",
+   "labels": [],
+   "platform": "area_averages"
+  }
+ },
+ "states": {
+  "input_boolean.show_offline_sensors": {
+   "attributes": {
+    "editable": true,
+    "friendly_name": "Show offline sensors",
+    "icon": "mdi:lan-disconnect"
+   },
+   "entity_id": "input_boolean.show_offline_sensors",
+   "last_changed": "2026-08-13T03:49:06.054413+00:00",
+   "last_reported": "2026-08-13T03:49:06.054413+00:00",
+   "state": "off"
+  },
+  "sensor.3d_printer_average_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "excluded": [
+     "sensor.altai_bed_target_temperature",
+     "sensor.altai_nozzle_target_temperature"
+    ],
+    "friendly_name": "3D Printer Average Temperature",
+    "healthy": true,
+    "issue": null,
+    "issues": [],
+    "low_battery": [],
+    "maximum": 87.8,
+    "member_count": 3,
+    "minimum": 80.6,
+    "offline": [],
+    "reporting": 3,
+    "sensors": [
+     "sensor.altai_bed_temperature",
+     "sensor.altai_chamber_temperature",
+     "sensor.altai_nozzle_temperature"
+    ],
+    "spread": 7.2,
+    "stale": [],
+    "state_class": "measurement",
+    "summary": "3 sensors",
+    "trend": "unknown",
+    "trend_rate": null,
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.3d_printer_average_temperature",
+   "last_changed": "2026-08-13T03:49:41.695173+00:00",
+   "last_reported": "2026-08-13T03:49:41.695173+00:00",
+   "state": "85.4"
+  },
+  "sensor.a4c138244934_ble_temperature_a4c138244934": {
+   "attributes": {
+    "battery_level": 3,
+    "device_class": "temperature",
+    "firmware": "BTHome V2",
+    "friendly_name": "ble temperature ATC Nimbus",
+    "last_mean_of": 1,
+    "last_packet_id": 164,
+    "mac_address": "A4:C1:38:24:49:34",
+    "mean": 27.59,
+    "median": 27.59,
+    "rssi": -92,
+    "sensor_type": "BTHome",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F",
+    "uuid": "A4:C1:38:24:49:34"
+   },
+   "entity_id": "sensor.a4c138244934_ble_temperature_a4c138244934",
+   "last_changed": "2026-08-13T03:49:14.064116+00:00",
+   "last_reported": "2026-08-13T03:49:14.064116+00:00",
+   "state": "81.662"
+  },
+  "sensor.altai_bed_target_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Altai Bed target temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0C"
+   },
+   "entity_id": "sensor.altai_bed_target_temperature",
+   "last_changed": "2026-08-13T03:49:16.266390+00:00",
+   "last_reported": "2026-08-13T03:49:16.266390+00:00",
+   "state": "0"
+  },
+  "sensor.altai_bed_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Altai Bed temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0C"
+   },
+   "entity_id": "sensor.altai_bed_temperature",
+   "last_changed": "2026-08-13T03:49:16.265786+00:00",
+   "last_reported": "2026-08-13T03:49:16.265786+00:00",
+   "state": "27"
+  },
+  "sensor.altai_chamber_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Altai Chamber temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0C"
+   },
+   "entity_id": "sensor.altai_chamber_temperature",
+   "last_changed": "2026-08-13T03:49:41.695031+00:00",
+   "last_reported": "2026-08-13T03:49:41.695031+00:00",
+   "state": "31"
+  },
+  "sensor.altai_nozzle_target_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Altai Nozzle target temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0C"
+   },
+   "entity_id": "sensor.altai_nozzle_target_temperature",
+   "last_changed": "2026-08-13T03:49:16.267795+00:00",
+   "last_reported": "2026-08-13T03:49:16.267795+00:00",
+   "state": "0"
+  },
+  "sensor.altai_nozzle_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Altai Nozzle temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0C"
+   },
+   "entity_id": "sensor.altai_nozzle_temperature",
+   "last_changed": "2026-08-13T03:49:16.267281+00:00",
+   "last_reported": "2026-08-13T03:49:16.267281+00:00",
+   "state": "31"
+  },
+  "sensor.apollo_msr_2_b22324_dps310_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Apollo MSR-2 b22324 DPS310 Temperature",
+    "icon": "mdi:thermometer",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.apollo_msr_2_b22324_dps310_temperature",
+   "last_changed": "2026-08-13T03:49:14.626986+00:00",
+   "last_reported": "2026-08-13T03:49:14.626986+00:00",
+   "state": "unavailable"
+  },
+  "sensor.apollo_plt_1_a84e64_air_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Pepper PLT-1 Air Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.apollo_plt_1_a84e64_air_temperature",
+   "last_changed": "2026-08-13T03:49:14.717241+00:00",
+   "last_reported": "2026-08-13T03:49:14.717241+00:00",
+   "state": "unavailable"
+  },
+  "sensor.atc_4934_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "bermuda_a4_c1_38_24_49_34 Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.atc_4934_temperature",
+   "last_changed": "2026-08-13T03:49:20.562201+00:00",
+   "last_reported": "2026-08-13T03:49:23.072830+00:00",
+   "state": "unavailable"
+  },
+  "sensor.bedroom_average_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "excluded": [],
+    "friendly_name": "Bedroom Average Temperature",
+    "healthy": false,
+    "issue": "mmwave_stick1 Temperature: offline; Pothos Temperature: offline",
+    "issues": [
+     "mmwave_stick1 Temperature: offline",
+     "Pothos Temperature: offline"
+    ],
+    "low_battery": [],
+    "maximum": 84.92,
+    "member_count": 6,
+    "minimum": 77.9,
+    "offline": [
+     "sensor.mmwave_stick1_temperature",
+     "sensor.pothos_temperature"
+    ],
+    "reporting": 4,
+    "sensors": [
+     "sensor.bedroom_echo_temperature",
+     "sensor.bedroom_ith_11_b_0440_temperature",
+     "sensor.h5075_2958_temperature",
+     "sensor.mmwave_stick1_temperature",
+     "sensor.pothos_temperature",
+     "sensor.shakti_temperature"
+    ],
+    "spread": 7.02,
+    "stale": [],
+    "state_class": "measurement",
+    "summary": "4 of 6 sensors",
+    "trend": "unknown",
+    "trend_rate": null,
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.bedroom_average_temperature",
+   "last_changed": "2026-08-13T03:51:21.903960+00:00",
+   "last_reported": "2026-08-13T03:51:21.903960+00:00",
+   "state": "82.62"
+  },
+  "sensor.bedroom_echo_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Bedroom Echo Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.bedroom_echo_temperature",
+   "last_changed": "2026-08-13T03:49:19.919897+00:00",
+   "last_reported": "2026-08-13T03:49:19.919897+00:00",
+   "state": "84.92"
+  },
+  "sensor.bedroom_eink_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Govee e-ink Hygrometer (455D) Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.bedroom_eink_temperature",
+   "last_changed": "2026-08-13T03:49:20.603447+00:00",
+   "last_reported": "2026-08-13T03:49:20.603447+00:00",
+   "state": "unavailable"
+  },
+  "sensor.bedroom_ith_11_b_0440_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Bedroom ITH-11-B 0440 Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.bedroom_ith_11_b_0440_temperature",
+   "last_changed": "2026-08-13T03:49:20.615045+00:00",
+   "last_reported": "2026-08-13T03:49:20.615045+00:00",
+   "state": "77.9"
+  },
+  "sensor.bench_average_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "excluded": [],
+    "friendly_name": "Bench Average Temperature",
+    "healthy": false,
+    "issue": "Apollo MSR-2 b22324 DPS310 Temperature: offline; bermuda_a4_c1_38_24_49_34 Temperature: offline; Govee e-ink Hygrometer (455D) Temperature: offline; esp32-thermal Ambient: offline; esp32-thermal Object: offline; eMotion Ultra (e04b4101a3b0) temperature: offline; waveshare-test SEN55 Temperature: offline",
+    "issues": [
+     "Apollo MSR-2 b22324 DPS310 Temperature: offline",
+     "bermuda_a4_c1_38_24_49_34 Temperature: offline",
+     "Govee e-ink Hygrometer (455D) Temperature: offline",
+     "esp32-thermal Ambient: offline",
+     "esp32-thermal Object: offline",
+     "eMotion Ultra (e04b4101a3b0) temperature: offline",
+     "waveshare-test SEN55 Temperature: offline"
+    ],
+    "low_battery": [],
+    "maximum": 84.02,
+    "member_count": 9,
+    "minimum": 79.52,
+    "offline": [
+     "sensor.apollo_msr_2_b22324_dps310_temperature",
+     "sensor.atc_4934_temperature",
+     "sensor.bedroom_eink_temperature",
+     "sensor.esp32_thermal_ambient",
+     "sensor.esp32_thermal_object",
+     "sensor.lnlinkha_e04b4101a3b00000000000009cac0000_t",
+     "sensor.waveshare_test_sen55_temperature"
+    ],
+    "reporting": 2,
+    "sensors": [
+     "sensor.apollo_msr_2_b22324_dps310_temperature",
+     "sensor.atc_4934_temperature",
+     "sensor.bedroom_eink_temperature",
+     "sensor.esp32_thermal_ambient",
+     "sensor.esp32_thermal_object",
+     "sensor.lnlinkha_e04b4101a3b00000000000009cac0000_t",
+     "sensor.snewy_temperature",
+     "sensor.tp359s_5848_temperature",
+     "sensor.waveshare_test_sen55_temperature"
+    ],
+    "spread": 4.5,
+    "stale": [],
+    "state_class": "measurement",
+    "summary": "2 of 9 sensors",
+    "trend": "unknown",
+    "trend_rate": null,
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.bench_average_temperature",
+   "last_changed": "2026-08-13T03:51:29.202923+00:00",
+   "last_reported": "2026-08-13T03:51:29.202923+00:00",
+   "state": "81.77"
+  },
+  "sensor.derry_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "external_sensor": "sensor.lr_plant_derry_temperature",
+    "friendly_name": "Derry Temperature",
+    "icon": "mdi:thermometer",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.derry_temperature",
+   "last_changed": "2026-08-13T03:49:16.651817+00:00",
+   "last_reported": "2026-08-13T03:49:16.651817+00:00",
+   "state": "82.4"
+  },
+  "sensor.esp32_thermal_ambient": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "esp32-thermal Ambient",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.esp32_thermal_ambient",
+   "last_changed": "2026-08-13T03:49:14.572422+00:00",
+   "last_reported": "2026-08-13T03:49:14.572422+00:00",
+   "state": "unavailable"
+  },
+  "sensor.esp32_thermal_object": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "esp32-thermal Object",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.esp32_thermal_object",
+   "last_changed": "2026-08-13T03:49:14.572968+00:00",
+   "last_reported": "2026-08-13T03:49:14.572968+00:00",
+   "state": "unavailable"
+  },
+  "sensor.fridge_average_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "excluded": [],
+    "friendly_name": "Fridge Average Temperature",
+    "healthy": true,
+    "issue": null,
+    "issues": [],
+    "low_battery": [],
+    "maximum": 52.52,
+    "member_count": 1,
+    "minimum": 52.52,
+    "offline": [],
+    "reporting": 1,
+    "sensors": [
+     "sensor.fridge_probe_temperature"
+    ],
+    "spread": null,
+    "stale": [],
+    "state_class": "measurement",
+    "summary": "1 sensor",
+    "trend": "unknown",
+    "trend_rate": null,
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.fridge_average_temperature",
+   "last_changed": "2026-08-13T03:49:20.613139+00:00",
+   "last_reported": "2026-08-13T03:49:20.613139+00:00",
+   "state": "52.52"
+  },
+  "sensor.fridge_probe_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Fridge Probe Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.fridge_probe_temperature",
+   "last_changed": "2026-08-13T03:49:20.613037+00:00",
+   "last_reported": "2026-08-13T03:49:20.613037+00:00",
+   "state": "52.52"
+  },
+  "sensor.fridge_t": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Fridge Temp",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.fridge_t",
+   "last_changed": "2026-08-13T03:49:20.585712+00:00",
+   "last_reported": "2026-08-13T03:49:20.585712+00:00",
+   "state": "41.828"
+  },
+  "sensor.h5075_2958_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Bedroom H5075 2958 Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.h5075_2958_temperature",
+   "last_changed": "2026-08-13T03:51:21.903812+00:00",
+   "last_reported": "2026-08-13T03:51:21.903812+00:00",
+   "state": "84.74"
+  },
+  "sensor.hippocrates_plant_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Hippocrates Soil Sensor Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.hippocrates_plant_temperature",
+   "last_changed": "2026-08-13T03:50:59.872567+00:00",
+   "last_reported": "2026-08-13T03:50:59.872567+00:00",
+   "state": "73.76"
+  },
+  "sensor.hippocrates_temperature_2": {
+   "attributes": {
+    "device_class": "temperature",
+    "external_sensor": "sensor.hippocrates_plant_temperature",
+    "friendly_name": "Hippocrates Temperature",
+    "icon": "mdi:thermometer",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.hippocrates_temperature_2",
+   "last_changed": "2026-08-13T03:49:16.616565+00:00",
+   "last_reported": "2026-08-13T03:49:16.616565+00:00",
+   "state": "73.76"
+  },
+  "sensor.ith_11_b_0090_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Living Room ITH-11-B 0090 Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.ith_11_b_0090_temperature",
+   "last_changed": "2026-08-13T03:49:20.588385+00:00",
+   "last_reported": "2026-08-13T03:49:20.588385+00:00",
+   "state": "unavailable"
+  },
+  "sensor.ith_11_b_0e38_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Fridge Thermometer Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.ith_11_b_0e38_temperature",
+   "last_changed": "2026-08-13T03:49:20.618547+00:00",
+   "last_reported": "2026-08-13T03:49:20.618547+00:00",
+   "state": "unavailable"
+  },
+  "sensor.kitchen_average_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "excluded": [
+     "sensor.fridge_t",
+     "sensor.ith_11_b_0e38_temperature"
+    ],
+    "friendly_name": "Kitchen Average Temperature",
+    "healthy": false,
+    "issue": "kitchen_thermometer Temperature: offline",
+    "issues": [
+     "kitchen_thermometer Temperature: offline"
+    ],
+    "low_battery": [],
+    "maximum": null,
+    "member_count": 1,
+    "minimum": null,
+    "offline": [
+     "sensor.kitchen_thermometer_temperature"
+    ],
+    "reporting": 0,
+    "sensors": [
+     "sensor.kitchen_thermometer_temperature"
+    ],
+    "spread": null,
+    "stale": [],
+    "state_class": "measurement",
+    "summary": "no sensors reporting",
+    "trend": "unknown",
+    "trend_rate": null,
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.kitchen_average_temperature",
+   "last_changed": "2026-08-13T03:49:14.348778+00:00",
+   "last_reported": "2026-08-13T03:49:22.297327+00:00",
+   "state": "unknown"
+  },
+  "sensor.kitchen_thermometer_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "kitchen_thermometer Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.kitchen_thermometer_temperature",
+   "last_changed": "2026-08-13T03:49:23.374904+00:00",
+   "last_reported": "2026-08-13T03:49:23.374904+00:00",
+   "state": "unknown"
+  },
+  "sensor.kitten_room_thermometer_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Kitten Room Thermometer Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.kitten_room_thermometer_temperature",
+   "last_changed": "2026-08-13T03:49:20.638653+00:00",
+   "last_reported": "2026-08-13T03:49:20.638653+00:00",
+   "state": "82.04"
+  },
+  "sensor.kittens_average_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "excluded": [],
+    "friendly_name": "Kittens Average Temperature",
+    "healthy": true,
+    "issue": null,
+    "issues": [],
+    "low_battery": [],
+    "maximum": 82.04,
+    "member_count": 2,
+    "minimum": 78.98,
+    "offline": [],
+    "reporting": 2,
+    "sensors": [
+     "sensor.kitten_room_thermometer_temperature",
+     "sensor.lionel_temperature_2"
+    ],
+    "spread": 3.06,
+    "stale": [],
+    "state_class": "measurement",
+    "summary": "2 sensors",
+    "trend": "unknown",
+    "trend_rate": null,
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.kittens_average_temperature",
+   "last_changed": "2026-08-13T03:49:20.638748+00:00",
+   "last_reported": "2026-08-13T03:49:20.638748+00:00",
+   "state": "80.51"
+  },
+  "sensor.lb_dew_point": {
+   "attributes": {
+    "attribution": "Data provided by OpenWeatherMap",
+    "device_class": "temperature",
+    "friendly_name": "Dew point",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.lb_dew_point",
+   "last_changed": "2026-08-13T03:49:14.384570+00:00",
+   "last_reported": "2026-08-13T03:49:14.384570+00:00",
+   "state": "64.67"
+  },
+  "sensor.lb_feels_like_temperature": {
+   "attributes": {
+    "attribution": "Data provided by OpenWeatherMap",
+    "device_class": "temperature",
+    "friendly_name": "Temperature (Feels like)",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.lb_feels_like_temperature",
+   "last_changed": "2026-08-13T03:49:14.385709+00:00",
+   "last_reported": "2026-08-13T03:49:14.385709+00:00",
+   "state": "70.682"
+  },
+  "sensor.lionel_temperature_2": {
+   "attributes": {
+    "device_class": "temperature",
+    "external_sensor": "sensor.lionel_temperature",
+    "friendly_name": "Lionel Temperature",
+    "icon": "mdi:thermometer",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.lionel_temperature_2",
+   "last_changed": "2026-08-13T03:49:16.636603+00:00",
+   "last_reported": "2026-08-13T03:49:16.636603+00:00",
+   "state": "78.98"
+  },
+  "sensor.living_room_average_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "excluded": [],
+    "friendly_name": "Living Room Average Temperature",
+    "healthy": false,
+    "issue": "Living Room ITH-11-B 0090 Temperature: offline; lr-plant-derry Temperature: offline; otter Temperature: offline",
+    "issues": [
+     "Living Room ITH-11-B 0090 Temperature: offline",
+     "lr-plant-derry Temperature: offline",
+     "otter Temperature: offline"
+    ],
+    "low_battery": [],
+    "maximum": 82.4,
+    "member_count": 6,
+    "minimum": 82.04,
+    "offline": [
+     "sensor.ith_11_b_0090_temperature",
+     "sensor.lr_plant_derry_temperature",
+     "sensor.otter_temp"
+    ],
+    "reporting": 3,
+    "sensors": [
+     "sensor.derry_temperature",
+     "sensor.ith_11_b_0090_temperature",
+     "sensor.livingroom_echo_temperature",
+     "sensor.lr_plant_derry_temperature",
+     "sensor.otter_temp",
+     "sensor.otter_temperature"
+    ],
+    "spread": 0.36,
+    "stale": [],
+    "state_class": "measurement",
+    "summary": "3 of 6 sensors",
+    "trend": "unknown",
+    "trend_rate": null,
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.living_room_average_temperature",
+   "last_changed": "2026-08-13T03:49:19.919560+00:00",
+   "last_reported": "2026-08-13T03:49:22.151870+00:00",
+   "state": "82.28"
+  },
+  "sensor.livingroom_echo_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Livingroom Echo Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.livingroom_echo_temperature",
+   "last_changed": "2026-08-13T03:49:19.919393+00:00",
+   "last_reported": "2026-08-13T03:49:19.919393+00:00",
+   "state": "82.04"
+  },
+  "sensor.lnlinkha_e04b4101a3b00000000000009cac0000_t": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "eMotion Ultra (e04b4101a3b0) temperature",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.lnlinkha_e04b4101a3b00000000000009cac0000_t",
+   "last_changed": "2026-08-13T03:49:21.881905+00:00",
+   "last_reported": "2026-08-13T03:49:21.881905+00:00",
+   "state": "unavailable"
+  },
+  "sensor.long_beach_waqi_temperature": {
+   "attributes": {
+    "attribution": "CARB - California Air Resources Board and Air Now - US EPA and World Air Quality Index Project",
+    "device_class": "temperature",
+    "friendly_name": "Long Beach (WAQI) Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.long_beach_waqi_temperature",
+   "last_changed": "2026-08-13T03:49:14.364004+00:00",
+   "last_reported": "2026-08-13T03:49:14.364004+00:00",
+   "state": "71.6"
+  },
+  "sensor.lr_plant_derry_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "lr-plant-derry Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.lr_plant_derry_temperature",
+   "last_changed": "2026-08-13T03:49:23.362895+00:00",
+   "last_reported": "2026-08-13T03:49:23.362895+00:00",
+   "state": "unknown"
+  },
+  "sensor.master_bathroom_average_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "excluded": [],
+    "friendly_name": "Master Bathroom Average Temperature",
+    "healthy": true,
+    "issue": null,
+    "issues": [],
+    "low_battery": [],
+    "maximum": 82.76,
+    "member_count": 1,
+    "minimum": 82.76,
+    "offline": [],
+    "reporting": 1,
+    "sensors": [
+     "sensor.misty_temperature_2"
+    ],
+    "spread": null,
+    "stale": [],
+    "state_class": "measurement",
+    "summary": "1 sensor",
+    "trend": "unknown",
+    "trend_rate": null,
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.master_bathroom_average_temperature",
+   "last_changed": "2026-08-13T03:49:16.627672+00:00",
+   "last_reported": "2026-08-13T03:49:16.627672+00:00",
+   "state": "82.76"
+  },
+  "sensor.misty_temperature_2": {
+   "attributes": {
+    "device_class": "temperature",
+    "external_sensor": "sensor.misty_temperature",
+    "friendly_name": "Misty Temperature",
+    "icon": "mdi:thermometer",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.misty_temperature_2",
+   "last_changed": "2026-08-13T03:49:16.627568+00:00",
+   "last_reported": "2026-08-13T03:49:16.627568+00:00",
+   "state": "82.76"
+  },
+  "sensor.mmwave_stick1_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "mmwave_stick1 Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.mmwave_stick1_temperature",
+   "last_changed": "2026-08-13T03:49:23.218241+00:00",
+   "last_reported": "2026-08-13T03:49:23.218241+00:00",
+   "state": "unknown"
+  },
+  "sensor.office_average_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "excluded": [
+     "sensor.sensorbox_aht20_temperature",
+     "sensor.sensorbox_bmp280_temperature",
+     "sensor.sensorbox_scd40_temperature"
+    ],
+    "friendly_name": "Office Average Temperature",
+    "healthy": false,
+    "issue": "Pepper PLT-1 Air Temperature: offline; sensor.office_temp: offline; office_temp1_1B80 Temperature: offline; ble battery ATC Nimbus: battery 3%",
+    "issues": [
+     "Pepper PLT-1 Air Temperature: offline",
+     "sensor.office_temp: offline",
+     "office_temp1_1B80 Temperature: offline",
+     "ble battery ATC Nimbus: battery 3%"
+    ],
+    "low_battery": [
+     "sensor.a4c138244934_ble_battery_a4c138244934"
+    ],
+    "maximum": 81.66,
+    "member_count": 6,
+    "minimum": 73.76,
+    "offline": [
+     "sensor.apollo_plt_1_a84e64_air_temperature",
+     "sensor.office_temp",
+     "sensor.office_temp1"
+    ],
+    "reporting": 3,
+    "sensors": [
+     "sensor.a4c138244934_ble_temperature_a4c138244934",
+     "sensor.apollo_plt_1_a84e64_air_temperature",
+     "sensor.hippocrates_plant_temperature",
+     "sensor.hippocrates_temperature_2",
+     "sensor.office_temp",
+     "sensor.office_temp1"
+    ],
+    "spread": 7.9,
+    "stale": [],
+    "state_class": "measurement",
+    "summary": "3 of 6 sensors",
+    "trend": "unknown",
+    "trend_rate": null,
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.office_average_temperature",
+   "last_changed": "2026-08-13T03:50:59.872701+00:00",
+   "last_reported": "2026-08-13T03:50:59.872701+00:00",
+   "state": "76.39"
+  },
+  "sensor.office_temp": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.office_temp",
+   "last_changed": "2026-08-13T03:49:20.598684+00:00",
+   "last_reported": "2026-08-13T03:49:20.598684+00:00",
+   "state": "unavailable"
+  },
+  "sensor.office_temp1": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "office_temp1_1B80 Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.office_temp1",
+   "last_changed": "2026-08-13T03:49:20.600336+00:00",
+   "last_reported": "2026-08-13T03:49:20.600336+00:00",
+   "state": "unavailable"
+  },
+  "sensor.openweathermap_temperature": {
+   "attributes": {
+    "attribution": "Data provided by OpenWeatherMap",
+    "device_class": "temperature",
+    "friendly_name": "Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.openweathermap_temperature",
+   "last_changed": "2026-08-13T03:49:14.385169+00:00",
+   "last_reported": "2026-08-13T03:49:14.385169+00:00",
+   "state": "70.07"
+  },
+  "sensor.otter_temp": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "otter Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.otter_temp",
+   "last_changed": "2026-08-13T03:49:23.364383+00:00",
+   "last_reported": "2026-08-13T03:49:23.364383+00:00",
+   "state": "unknown"
+  },
+  "sensor.otter_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "external_sensor": "sensor.otter_temp",
+    "friendly_name": "Otter Temperature",
+    "icon": "mdi:thermometer",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.otter_temperature",
+   "last_changed": "2026-08-13T03:49:16.643917+00:00",
+   "last_reported": "2026-08-13T03:49:16.643917+00:00",
+   "state": "82.4"
+  },
+  "sensor.outside_average_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "excluded": [],
+    "friendly_name": "Outside Average Temperature",
+    "healthy": true,
+    "issue": null,
+    "issues": [],
+    "low_battery": [],
+    "maximum": 78.8,
+    "member_count": 1,
+    "minimum": 78.8,
+    "offline": [],
+    "reporting": 1,
+    "sensors": [
+     "sensor.outside_ith_11_b_12b4_temperature"
+    ],
+    "spread": null,
+    "stale": [],
+    "state_class": "measurement",
+    "summary": "1 sensor",
+    "trend": "unknown",
+    "trend_rate": null,
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.outside_average_temperature",
+   "last_changed": "2026-08-13T03:49:20.619752+00:00",
+   "last_reported": "2026-08-13T03:49:20.619752+00:00",
+   "state": "78.8"
+  },
+  "sensor.outside_ith_11_b_12b4_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Outside ITH-11-B 12B4 Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.outside_ith_11_b_12b4_temperature",
+   "last_changed": "2026-08-13T03:49:20.619648+00:00",
+   "last_reported": "2026-08-13T03:49:20.619648+00:00",
+   "state": "78.8"
+  },
+  "sensor.pothos_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "external_sensor": "sensor.0xa4c138c0bc853b4d_temperature",
+    "friendly_name": "Pothos Temperature",
+    "icon": "mdi:thermometer",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.pothos_temperature",
+   "last_changed": "2026-08-13T03:49:16.657092+00:00",
+   "last_reported": "2026-08-13T03:49:16.657092+00:00",
+   "state": "unknown"
+  },
+  "sensor.sensorbox_aht20_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "sensorbox AHT20 Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.sensorbox_aht20_temperature",
+   "last_changed": "2026-08-13T03:51:28.834265+00:00",
+   "last_reported": "2026-08-13T03:51:28.834265+00:00",
+   "state": "84.3182678222656"
+  },
+  "sensor.sensorbox_bmp280_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "sensorbox BMP280 Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.sensorbox_bmp280_temperature",
+   "last_changed": "2026-08-13T03:51:28.833732+00:00",
+   "last_reported": "2026-08-13T03:51:28.833732+00:00",
+   "state": "84.2814224243164"
+  },
+  "sensor.sensorbox_scd40_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "sensorbox SCD40 Temperature",
+    "icon": "mdi:thermometer",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.sensorbox_scd40_temperature",
+   "last_changed": "2026-08-13T03:51:10.635387+00:00",
+   "last_reported": "2026-08-13T03:51:10.635387+00:00",
+   "state": "90.2208099365234"
+  },
+  "sensor.shakti_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "external_sensor": "sensor.shakti_plant_temperature",
+    "friendly_name": "Shakti Temperature",
+    "icon": "mdi:thermometer",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.shakti_temperature",
+   "last_changed": "2026-08-13T03:49:16.603613+00:00",
+   "last_reported": "2026-08-13T03:49:16.603613+00:00",
+   "state": "82.94"
+  },
+  "sensor.snewy_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "Snewy Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.snewy_temperature",
+   "last_changed": "2026-08-13T03:49:20.607411+00:00",
+   "last_reported": "2026-08-13T03:49:20.607411+00:00",
+   "state": "79.52"
+  },
+  "sensor.tp359s_5848_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "TP359S (5848) Temperature",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.tp359s_5848_temperature",
+   "last_changed": "2026-08-13T03:51:29.202745+00:00",
+   "last_reported": "2026-08-13T03:51:29.202745+00:00",
+   "state": "84.02"
+  },
+  "sensor.waveshare_test_sen55_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "friendly_name": "waveshare-test SEN55 Temperature",
+    "icon": "mdi:thermometer",
+    "state_class": "measurement",
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.waveshare_test_sen55_temperature",
+   "last_changed": "2026-08-13T03:49:14.728236+00:00",
+   "last_reported": "2026-08-13T03:49:14.728236+00:00",
+   "state": "unavailable"
+  },
+  "sensor.weather_average_temperature": {
+   "attributes": {
+    "device_class": "temperature",
+    "excluded": [],
+    "friendly_name": "Weather Average Temperature",
+    "healthy": true,
+    "issue": null,
+    "issues": [],
+    "low_battery": [],
+    "maximum": 71.6,
+    "member_count": 4,
+    "minimum": 64.67,
+    "offline": [],
+    "reporting": 4,
+    "sensors": [
+     "sensor.lb_dew_point",
+     "sensor.lb_feels_like_temperature",
+     "sensor.long_beach_waqi_temperature",
+     "sensor.openweathermap_temperature"
+    ],
+    "spread": 6.93,
+    "stale": [],
+    "state_class": "measurement",
+    "summary": "4 sensors",
+    "trend": "unknown",
+    "trend_rate": null,
+    "unit_of_measurement": "\u00b0F"
+   },
+   "entity_id": "sensor.weather_average_temperature",
+   "last_changed": "2026-08-13T03:49:14.385825+00:00",
+   "last_reported": "2026-08-13T03:49:14.385825+00:00",
+   "state": "69.26"
+  },
+  "switch.area_averages_show_offline": {
+   "attributes": {
+    "friendly_name": "Show offline sensors",
+    "icon": "mdi:lan-disconnect"
+   },
+   "entity_id": "switch.area_averages_show_offline",
+   "last_changed": "2026-08-13T03:49:14.352906+00:00",
+   "last_reported": "2026-08-13T03:49:14.352906+00:00",
+   "state": "off"
+  }
+ }
+}

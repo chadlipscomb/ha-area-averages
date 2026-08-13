@@ -1,7 +1,8 @@
 """The Area Averages integration.
 
 Creates a robust average sensor per Home Assistant area for each configured
-device class (temperature by default). Pure core APIs, no external
+device class (temperature by default), plus the show-offline switch the
+dashboard hangs its reveal control on. Pure core APIs, no external
 dependencies.
 """
 
@@ -11,11 +12,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+from .const import DOMAIN
+
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SWITCH]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Area Averages from a config entry."""
+    hass.data.setdefault(DOMAIN, {})
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     return True

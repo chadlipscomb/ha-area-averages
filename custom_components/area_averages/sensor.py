@@ -6,16 +6,28 @@ up automatically, and anything carrying the exclude label (on the entity
 or its device) is left out. Diagnostic/config-category entities (device
 chip temps, radio temps, ...) are never included.
 
-The average is the mean of the members that are currently reporting a
-numeric state, so one live sensor is enough to keep the value meaningful.
-The `issue` attribute is None when everything is healthy; otherwise it
-lists members that are stale (no data inside the window) or low battery.
+The average is the mean of the members that are actually contributing a
+number right now. Members are always in exactly one of three buckets:
+
+  offline    no usable number at all (missing, unavailable, non-numeric,
+             or an unconvertible unit). Immediate -- there is nothing to
+             wait for -- and it wins over staleness.
+  stale      holds a number, but has not reported inside the staleness
+             window. Its value is DROPPED from the mean.
+  reporting  everything else; these are the values inside the mean.
+
+len(offline) + len(stale) + reporting == member_count, always.
+
+The semantics of every published attribute live in calc.py, which is pure
+stdlib and shared with tools/make_fixture.py so the test fixture cannot
+drift away from what the sensor really does.
 """
 
 from __future__ import annotations
 
 import logging
 import math
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import timedelta
 from statistics import fmean
@@ -49,35 +61,63 @@ from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
 from homeassistant.util import dt as dt_util, slugify
 from homeassistant.util.unit_conversion import PressureConverter, TemperatureConverter
 
+from . import calc
 from .const import (
     ATTR_EXCLUDED,
+    ATTR_HEALTHY,
     ATTR_ISSUE,
     ATTR_ISSUES,
     ATTR_LOW_BATTERY,
+    ATTR_MAXIMUM,
     ATTR_MEMBER_COUNT,
+    ATTR_MINIMUM,
+    ATTR_OFFLINE,
     ATTR_REPORTING,
     ATTR_SENSORS,
+    ATTR_SPREAD,
     ATTR_STALE,
+    ATTR_SUMMARY,
+    ATTR_TREND,
+    ATTR_TREND_RATE,
     CONF_BATTERY_THRESHOLD,
     CONF_DEVICE_CLASSES,
     CONF_EXCLUDE_LABEL,
     CONF_STALE_HOURS,
+    CONF_TREND_MINUTES,
     DEFAULT_BATTERY_THRESHOLD,
     DEFAULT_DEVICE_CLASSES,
     DEFAULT_EXCLUDE_LABEL,
     DEFAULT_STALE_HOURS,
+    DEFAULT_TREND_MINUTES,
     DOMAIN,
+    SUPPORTED_DEVICE_CLASSES,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 REFRESH_DEBOUNCE = 2.0  # seconds; coalesces registry-event bursts
-PERIODIC_INTERVAL = timedelta(minutes=10)  # re-check staleness/battery
+PERIODIC_INTERVAL = timedelta(minutes=10)  # re-check staleness/battery/trend
 
-UNIT_CONVERTERS = {
+#: Bounded, in-memory only. Never persisted, never read from the recorder.
+TREND_MAX_SAMPLES = 90
+TREND_MIN_SAMPLE_GAP = 60.0  # seconds between kept trend samples
+
+TREND_MINUTES_MIN = 15
+TREND_MINUTES_MAX = 720
+
+UNIT_CONVERTERS: dict[str, Any] = {
     "temperature": TemperatureConverter,
     "pressure": PressureConverter,
 }
+
+try:  # available in newer cores; purely additive when it is
+    from homeassistant.util.unit_conversion import (  # noqa: I001
+        MassVolumeConcentrationConverter,
+    )
+
+    UNIT_CONVERTERS["pm25"] = MassVolumeConcentrationConverter
+except ImportError:  # pragma: no cover - depends on core version
+    pass
 
 NICE_NAMES = {
     "temperature": "Temperature",
@@ -87,6 +127,29 @@ NICE_NAMES = {
     "illuminance": "Illuminance",
     "pm25": "PM2.5",
 }
+
+
+@callback
+def resolve_label_ids(hass: HomeAssistant, configured: str) -> set[str]:
+    """Label registry ids matching a configured label id, name or slug.
+
+    Deliberately forgiving: the option used to be free text, so an entry
+    saved as "exclude-average" must keep working after the picker lands.
+    Shared with the options flow so both agree on what a stored value means.
+    """
+    wanted = (configured or "").strip()
+    lowered = wanted.lower()
+    if not wanted:
+        return set()
+    ids: set[str] = set()
+    for label in lr.async_get(hass).labels.values():
+        if (
+            label.label_id == wanted
+            or label.name.strip().lower() == lowered
+            or label.label_id == slugify(lowered)
+        ):
+            ids.add(label.label_id)
+    return ids
 
 
 @dataclass
@@ -116,6 +179,13 @@ async def async_setup_entry(
 ) -> None:
     """Set up the platform and start the area manager."""
     manager = AreaAveragesManager(hass, entry, async_add_entities)
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = manager
+
+    @callback
+    def _forget_manager() -> None:
+        hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
+
+    entry.async_on_unload(_forget_manager)
     await manager.async_start()
 
 
@@ -134,19 +204,29 @@ class AreaAveragesManager:
         self._entities: dict[tuple[str, str], AreaAverageSensor] = {}
         self._pending_refresh: CALLBACK_TYPE | None = None
         self._exclude_label_ids: set[str] = set()
+        # Reference point for seeding staleness clocks: anything a member
+        # state reported before this belongs to a previous HA run.
+        self.started_at = dt_util.utcnow()
 
         options = entry.options
         self.device_classes: list[str] = list(
             options.get(CONF_DEVICE_CLASSES, DEFAULT_DEVICE_CLASSES)
         )
-        self.stale_hours: float = float(
-            options.get(CONF_STALE_HOURS, DEFAULT_STALE_HOURS)
+        self.stale_hours: float = _as_float(
+            options.get(CONF_STALE_HOURS), DEFAULT_STALE_HOURS
         )
-        self.battery_threshold: float = float(
-            options.get(CONF_BATTERY_THRESHOLD, DEFAULT_BATTERY_THRESHOLD)
+        self.battery_threshold: float = _as_float(
+            options.get(CONF_BATTERY_THRESHOLD), DEFAULT_BATTERY_THRESHOLD
         )
         self.exclude_label: str = str(
             options.get(CONF_EXCLUDE_LABEL, DEFAULT_EXCLUDE_LABEL)
+        )
+        self.trend_minutes: float = min(
+            TREND_MINUTES_MAX,
+            max(
+                TREND_MINUTES_MIN,
+                _as_float(options.get(CONF_TREND_MINUTES), DEFAULT_TREND_MINUTES),
+            ),
         )
 
     async def async_start(self) -> None:
@@ -173,6 +253,19 @@ class AreaAveragesManager:
             )
         self.entry.async_on_unload(self._cancel_pending_refresh)
         self._refresh()
+        self._prune_orphans()
+
+        _LOGGER.info(
+            "Area Averages started: device classes %s, exclude label %r -> %s, "
+            "%d averages across %d areas (stale after %s h, trend window %s min)",
+            self.device_classes,
+            self.exclude_label,
+            sorted(self._exclude_label_ids) or "no matching label",
+            len(self._entities),
+            len({area_id for area_id, _ in self._entities}),
+            self.stale_hours,
+            self.trend_minutes,
+        )
 
     # ------------------------------------------------------------- events
 
@@ -210,12 +303,18 @@ class AreaAveragesManager:
 
     @callback
     def _resolve_exclude_label(self) -> None:
-        """Map the configured label name to label registry ids."""
-        wanted = self.exclude_label.strip().lower()
-        ids: set[str] = set()
-        for label in lr.async_get(self.hass).labels.values():
-            if label.name.strip().lower() == wanted or label.label_id == slugify(wanted):
-                ids.add(label.label_id)
+        """Map the configured label (id, name or slug) to label registry ids."""
+        configured = self.exclude_label.strip()
+        ids = resolve_label_ids(self.hass, configured)
+        if configured and not ids:
+            # Silence here is dangerous: every exclusion vanishes and an
+            # empty `excluded` list is indistinguishable from healthy.
+            _LOGGER.warning(
+                "Area Averages: exclude label %r matches no label in the label "
+                "registry — NOTHING is being excluded from any average. "
+                "Pick an existing label in the integration options.",
+                configured,
+            )
         self._exclude_label_ids = ids
 
     @callback
@@ -303,6 +402,52 @@ class AreaAveragesManager:
         if new_entities:
             self._async_add_entities(new_entities)
 
+    @callback
+    def _prune_orphans(self) -> None:
+        """Drop registry entries left behind by a previous configuration.
+
+        An options change reloads the entry, so the in-memory bookkeeping in
+        _refresh() starts empty and cannot notice that (say) every humidity
+        average is gone. Those entries would otherwise stay in the registry
+        forever, owned by this entry and served as unavailable.
+
+        Only genuine removals are deleted: an average that comes back later
+        with the same unique_id reclaims its old entity_id and history.
+        """
+        if self.device_classes and not self._entities:
+            # Something is wrong (registries not ready, every area lost its
+            # members at once). Deleting registry entries here would throw
+            # away real history; leaving orphans is the cheaper mistake.
+            _LOGGER.warning(
+                "Area Averages: %s configured but no averages resolved — "
+                "skipping orphan cleanup rather than removing entities",
+                self.device_classes,
+            )
+            return
+        ent_reg = er.async_get(self.hass)
+        desired = {
+            calc.average_unique_id(area_id, device_class)
+            for area_id, device_class in self._entities
+        }
+        existing = [
+            (entry.entity_id, entry.unique_id)
+            for entry in er.async_entries_for_config_entry(
+                ent_reg, self.entry.entry_id
+            )
+            # Only our own average sensors; the config switch lives on the
+            # same config entry and must never be pruned.
+            if entry.domain == "sensor"
+            and entry.platform == DOMAIN
+            and str(entry.unique_id).endswith("_average")
+        ]
+        for entity_id in calc.orphan_unique_ids(desired, existing):
+            _LOGGER.info(
+                "Area Averages: removing orphaned entity %s (no longer produced "
+                "by the current options)",
+                entity_id,
+            )
+            ent_reg.async_remove(entity_id)
+
     async def _async_remove_entity(self, entity: AreaAverageSensor) -> None:
         """Remove an average whose area lost all members (or was deleted)."""
         entity_id = entity.entity_id
@@ -311,13 +456,42 @@ class AreaAveragesManager:
         if entity_id and ent_reg.async_get(entity_id) is not None:
             ent_reg.async_remove(entity_id)
 
+    # ------------------------------------------------------- diagnostics
+
+    @callback
+    def diagnostics(self) -> dict[str, Any]:
+        """Snapshot for diagnostics.py (no I/O, safe on the event loop)."""
+        return {
+            "options": {
+                CONF_DEVICE_CLASSES: self.device_classes,
+                CONF_STALE_HOURS: self.stale_hours,
+                CONF_BATTERY_THRESHOLD: self.battery_threshold,
+                CONF_EXCLUDE_LABEL: self.exclude_label,
+                CONF_TREND_MINUTES: self.trend_minutes,
+            },
+            "exclude_label_ids": sorted(self._exclude_label_ids),
+            "started_at": self.started_at.isoformat(),
+            "averages": [
+                entity.diagnostics() for entity in self._entities.values()
+            ],
+        }
+
+
+def _as_float(value: Any, default: float) -> float:
+    """Options come back from the UI as str/int/float; never explode."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return float(default)
+    return number if math.isfinite(number) else float(default)
+
 
 class AreaAverageSensor(SensorEntity, RestoreEntity):
     """Mean of the reporting sensors of one device class in one area."""
 
     _attr_should_poll = False
     _attr_state_class = SensorStateClass.MEASUREMENT
-    _unrecorded_attributes = frozenset({ATTR_SENSORS, ATTR_EXCLUDED})
+    _unrecorded_attributes = frozenset({ATTR_SENSORS, ATTR_EXCLUDED, ATTR_OFFLINE})
 
     def __init__(
         self,
@@ -332,21 +506,27 @@ class AreaAverageSensor(SensorEntity, RestoreEntity):
         self._membership = membership
         self._unsub_state: CALLBACK_TYPE | None = None
         self._last_numeric: dict[str, Any] = {}
+        self._trend_samples: deque[tuple[float, float]] = deque(
+            maxlen=TREND_MAX_SAMPLES
+        )
+        self._warned_units: set[tuple[str, str]] = set()
 
-        self._attr_unique_id = f"{area_id}_{device_class}_average"
+        self._attr_unique_id = calc.average_unique_id(area_id, device_class)
         try:
             self._attr_device_class = SensorDeviceClass(device_class)
         except ValueError:
             self._attr_device_class = None
-        if device_class == "temperature":
-            self._attr_native_unit_of_measurement = (
-                manager.hass.config.units.temperature_unit
-            )
-        elif device_class == "humidity":
-            self._attr_native_unit_of_measurement = "%"
-        else:
-            # Adopted from the first reporting member.
-            self._attr_native_unit_of_measurement = None
+        if device_class in SUPPORTED_DEVICE_CLASSES:
+            # Icons come from icons.json rather than the dashboard.
+            self._attr_translation_key = device_class
+        # Every supported device class has a fixed unit. A MEASUREMENT
+        # sensor that starts unitless and later adopts a member's unit makes
+        # the recorder throw away its long-term statistics.
+        self._attr_native_unit_of_measurement = calc.fixed_unit(
+            device_class,
+            manager.hass.config.units.temperature_unit,
+            manager.hass.config.units.pressure_unit,
+        )
         self._attr_suggested_display_precision = 1
         self._attr_extra_state_attributes: dict[str, Any] = {}
         self._refresh_name()
@@ -375,28 +555,39 @@ class AreaAverageSensor(SensorEntity, RestoreEntity):
             return None
         return value
 
+    @callback
+    def _warn_unit(self, unit: str, target: str) -> None:
+        """Warn once per (unit, target) pair — _recompute runs constantly."""
+        key = (str(unit), str(target))
+        if key in self._warned_units:
+            return
+        self._warned_units.add(key)
+        _LOGGER.warning(
+            "%s: dropping members reporting %s — no conversion into %s. "
+            "Label them %r to exclude them explicitly.",
+            self.entity_id or self._attr_unique_id,
+            unit,
+            target,
+            self._manager.exclude_label,
+        )
+
     def _converted(self, value: float, unit: str | None) -> float | None:
         """Convert a member value into this sensor's unit if needed."""
         target = self._attr_native_unit_of_measurement
         if target is None:
+            # Only reachable for a device class with no fixed unit.
             self._attr_native_unit_of_measurement = unit
             return value
-        if unit is None or unit == target:
+        if unit is None or calc.normalize_unit(unit) == calc.normalize_unit(target):
             return value
         converter = UNIT_CONVERTERS.get(self._device_class_key)
-        if (
-            converter is not None
-            and unit in converter.VALID_UNITS
-            and target in converter.VALID_UNITS
-        ):
-            return converter.convert(value, unit, target)
-        _LOGGER.debug(
-            "%s: skipping value %s %s (average unit is %s)",
-            self.entity_id,
-            value,
-            unit,
-            target,
-        )
+        if converter is not None:
+            try:
+                if unit in converter.VALID_UNITS and target in converter.VALID_UNITS:
+                    return converter.convert(value, unit, target)
+            except (TypeError, ValueError, KeyError, ZeroDivisionError):
+                pass
+        self._warn_unit(unit, target)
         return None
 
     # ---------------------------------------------------------- lifecycle
@@ -419,12 +610,36 @@ class AreaAverageSensor(SensorEntity, RestoreEntity):
                 )
                 if parsed is not None:
                     self._last_numeric[entity_id] = parsed
+        self._seed_last_numeric()
         self._subscribe()
         ent_reg = er.async_get(self.hass)
         reg_entry = ent_reg.async_get(self.entity_id)
         if reg_entry is not None and reg_entry.area_id is None:
             ent_reg.async_update_entity(self.entity_id, area_id=self._area_id)
         self._recompute()
+
+    @callback
+    def _seed_last_numeric(self) -> None:
+        """Seed staleness clocks for members with no persisted timestamp.
+
+        Only from reports that predate this run — a report made after we
+        started will be picked up by _recompute anyway. A member that has
+        never produced a number keeps no timestamp at all and is reported
+        as offline rather than stale, which is the honest answer.
+        """
+        reference = self._manager.started_at
+        for entity_id in self._membership.members:
+            if entity_id in self._last_numeric:
+                continue
+            state = self.hass.states.get(entity_id)
+            if state is None or self._numeric_value(state) is None:
+                # No number now means no evidence it ever reported one; a
+                # timestamp here would make diagnostics claim a numeric report
+                # at an instant the member was unavailable.
+                continue
+            last = state.last_reported or state.last_updated
+            if last is not None and last < reference:
+                self._last_numeric[entity_id] = last
 
     async def async_will_remove_from_hass(self) -> None:
         self._unsubscribe()
@@ -473,69 +688,192 @@ class AreaAverageSensor(SensorEntity, RestoreEntity):
     # -------------------------------------------------------------- state
 
     @callback
-    def _recompute(self) -> None:
-        now = dt_util.utcnow()
-        stale_cutoff = timedelta(hours=self._manager.stale_hours)
-        values: list[float] = []
-        issues: list[str] = []
-        stale: list[str] = []
-        low_battery: list[str] = []
-
+    def _sample_members(
+        self, names: dict[str, str]
+    ) -> list[calc.MemberSample]:
+        """One snapshot per member, already converted into our unit."""
+        samples: list[calc.MemberSample] = []
         for entity_id in self._membership.members:
             state = self.hass.states.get(entity_id)
+            value: float | None = None
             if state is None:
-                continue
-            value = self._numeric_value(state)
-            if value is not None:
-                converted = self._converted(
-                    value, state.attributes.get("unit_of_measurement")
-                )
-                if converted is not None:
-                    values.append(converted)
-                # Time of the last actual report, even if the value repeated.
-                last = state.last_reported or state.last_updated
-                self._last_numeric[entity_id] = last
+                names[entity_id] = entity_id
             else:
-                # Not reporting. Prefer the persisted last-numeric time; the
-                # live last_changed resets on every HA restart.
-                last = self._last_numeric.get(entity_id) or state.last_changed
-            age = now - last
-            if age >= stale_cutoff:
-                stale.append(entity_id)
-                issues.append(
-                    f"{state.name}: no data for {int(age.total_seconds() // 3600)} h"
+                names[entity_id] = state.name or entity_id
+                raw = self._numeric_value(state)
+                if raw is not None:
+                    # Time of the last actual report, even if the value
+                    # repeated. Recorded before conversion: it is a fact
+                    # about the member, not about our unit.
+                    last = state.last_reported or state.last_updated
+                    if last is not None:
+                        self._last_numeric[entity_id] = last
+                    value = self._converted(
+                        raw, state.attributes.get("unit_of_measurement")
+                    )
+            stamp = self._last_numeric.get(entity_id)
+            samples.append(
+                calc.MemberSample(
+                    entity_id,
+                    value,
+                    stamp.timestamp() if stamp is not None else None,
                 )
+            )
+        return samples
 
-        battery_owner: dict[str, str] = {}
+    @callback
+    def _battery_status(
+        self,
+    ) -> tuple[list[str], list[tuple[str, str, float | None]]]:
+        """(low_battery entity_ids, issue rows) for the members' batteries."""
+        low_battery: list[str] = []
+        rows: list[tuple[str, str, float | None]] = []
+        owner: dict[str, str] = {}
         for member, batteries in self._membership.batteries.items():
             for battery_id in batteries:
-                battery_owner.setdefault(battery_id, member)
-        for battery_id in sorted(battery_owner):
+                owner.setdefault(battery_id, member)
+        for battery_id in sorted(owner):
             state = self.hass.states.get(battery_id)
             if state is None or state.state in (STATE_UNKNOWN, STATE_UNAVAILABLE):
                 continue
             if battery_id.startswith("binary_sensor."):
                 if state.state == "on":
                     low_battery.append(battery_id)
-                    issues.append(f"{state.name}: low battery")
+                    rows.append((state.name, battery_id, None))
                 continue
             try:
                 level = float(state.state)
             except (TypeError, ValueError):
                 continue
+            if not math.isfinite(level):
+                continue
             if level <= self._manager.battery_threshold:
                 low_battery.append(battery_id)
-                issues.append(f"{state.name}: battery {round(level)}%")
+                rows.append((state.name, battery_id, level))
+        return low_battery, rows
 
-        self._attr_native_value = round(fmean(values), 2) if values else None
+    @callback
+    def _track_trend(self, now: float, mean: float | None) -> tuple[str, float | None]:
+        """Bounded in-memory trend. No recorder, no persistence, no I/O."""
+        window = self._manager.trend_minutes * 60.0
+        if mean is not None:
+            # Keep the samples spread out, or a chatty room fills the deque
+            # in two minutes and the trend can never span long enough.
+            gap = max(TREND_MIN_SAMPLE_GAP, window / TREND_MAX_SAMPLES)
+            if not self._trend_samples or now - self._trend_samples[-1][0] >= gap:
+                self._trend_samples.append((now, mean))
+        points = [
+            (stamp, value)
+            for stamp, value in self._trend_samples
+            if now - stamp <= window
+        ]
+        return calc.trend_of(points)
+
+    @callback
+    def _recompute(self) -> None:
+        if self.hass is None:
+            return
+        now = dt_util.utcnow()
+        now_ts = now.timestamp()
+        stale_seconds = max(self._manager.stale_hours, 0.0) * 3600.0
+
+        names: dict[str, str] = {}
+        samples = self._sample_members(names)
+        reporting, stale, offline = calc.classify_members(
+            samples, now_ts, stale_seconds
+        )
+        values = [value for _, value in reporting]
+
+        stale_rows: list[tuple[str, str, int]] = []
+        for entity_id in stale:
+            stamp = self._last_numeric.get(entity_id)
+            hours = (
+                int((now_ts - stamp.timestamp()) // 3600)
+                if stamp is not None
+                else int(self._manager.stale_hours)
+            )
+            stale_rows.append((names.get(entity_id, entity_id), entity_id, hours))
+
+        low_battery, battery_rows = self._battery_status()
+        issues = calc.issue_rows(
+            [(names.get(entity_id, entity_id), entity_id) for entity_id in offline],
+            stale_rows,
+            battery_rows,
+        )
+
+        mean = round(fmean(values), 2) if values else None
+        minimum, maximum, spread = calc.stats(values)
+        trend, trend_rate = self._track_trend(now_ts, mean)
+
+        self._attr_native_value = mean
         self._attr_extra_state_attributes = {
             ATTR_ISSUE: "; ".join(issues) if issues else None,
             ATTR_ISSUES: issues,
+            ATTR_HEALTHY: calc.healthy_state(len(reporting), issues),
+            ATTR_SUMMARY: calc.summary_text(
+                len(self._membership.members), len(reporting)
+            ),
             ATTR_SENSORS: list(self._membership.members),
             ATTR_EXCLUDED: list(self._membership.excluded),
             ATTR_MEMBER_COUNT: len(self._membership.members),
-            ATTR_REPORTING: len(values),
+            ATTR_REPORTING: len(reporting),
+            ATTR_OFFLINE: offline,
             ATTR_STALE: stale,
             ATTR_LOW_BATTERY: low_battery,
+            ATTR_MINIMUM: minimum,
+            ATTR_MAXIMUM: maximum,
+            ATTR_SPREAD: spread,
+            ATTR_TREND: trend,
+            ATTR_TREND_RATE: trend_rate,
         }
         self.async_write_ha_state()
+
+    # -------------------------------------------------------- diagnostics
+
+    @callback
+    def diagnostics(self) -> dict[str, Any]:
+        """Per-average detail for diagnostics.py."""
+        now_ts = dt_util.utcnow().timestamp()
+        stale_seconds = max(self._manager.stale_hours, 0.0) * 3600.0
+        names: dict[str, str] = {}
+        samples = self._sample_members(names)
+        reporting, stale, offline = calc.classify_members(
+            samples, now_ts, stale_seconds
+        )
+        reporting_ids = {entity_id for entity_id, _ in reporting}
+        members = []
+        for sample in samples:
+            if sample.entity_id in reporting_ids:
+                classification = "reporting"
+            elif sample.entity_id in stale:
+                classification = "stale"
+            else:
+                classification = "offline"
+            stamp = self._last_numeric.get(sample.entity_id)
+            members.append(
+                {
+                    "entity_id": sample.entity_id,
+                    "name": names.get(sample.entity_id),
+                    "classification": classification,
+                    "value_in_average_unit": sample.value,
+                    "last_numeric": stamp.isoformat() if stamp is not None else None,
+                }
+            )
+        return {
+            "entity_id": self.entity_id,
+            "unique_id": self._attr_unique_id,
+            "area_id": self._area_id,
+            "device_class": self._device_class_key,
+            "unit": self._attr_native_unit_of_measurement,
+            "state": self._attr_native_value,
+            "members": members,
+            "excluded": list(self._membership.excluded),
+            "batteries": {
+                member: list(batteries)
+                for member, batteries in self._membership.batteries.items()
+            },
+            "trend_samples": len(self._trend_samples),
+            "unconvertible_units": sorted(
+                {unit for unit, _ in self._warned_units}
+            ),
+        }
