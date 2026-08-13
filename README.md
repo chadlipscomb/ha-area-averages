@@ -113,8 +113,8 @@ long-term statistics when a unit appeared later.
   offline, stale and battery rows, or one quiet line when all is well), then
   three groups: **Inside**, **Outdoors**, **Equipment & Cold**. One hero card
   per room: name, area icon, temperature on the 65/68/78/84 ladder with a red
-  `mdi:fire` badge above 84, a secondary that states its own coverage
-  (`83.7 °F · 2 of 9 sensors · 80.6–85.8`), and a 24 h sparkline underneath.
+  `mdi:fire` badge above 84, and a secondary that states its own coverage
+  (`83.7 °F · 2 of 9 sensors`). Half-width, no graph — see Density below.
   No member tiles at all. Fridge is judged on its own 45/50 ladder; 3D Printer,
   Bench, Outside and Weather carry no comfort semantics.
 - **Trends** — core `statistics-graph` only: one 7-day overview of all room
