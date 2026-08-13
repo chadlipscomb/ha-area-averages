@@ -23,6 +23,7 @@ template:
   - trigger:
       - trigger: state
         entity_id:
+          - sensor.3d_printer_native_average_temperature
           - sensor.altai_bed_target_temperature
           - sensor.altai_bed_temperature
           - sensor.altai_chamber_temperature
@@ -67,6 +68,7 @@ template:
         entity_id:
           - sensor.bedroom_echo_temperature
           - sensor.bedroom_ith_11_b_0440_temperature
+          - sensor.bedroom_native_average_temperature
           - sensor.h5075_2958_temperature
           - sensor.mmwave_stick1_temperature
           - sensor.pothos_temperature
@@ -111,6 +113,7 @@ template:
           - sensor.apollo_msr_2_b22324_dps310_temperature
           - sensor.atc_4934_temperature
           - sensor.bedroom_eink_temperature
+          - sensor.bench_native_average_temperature
           - sensor.esp32_thermal_ambient
           - sensor.esp32_thermal_object
           - sensor.lnlinkha_e04b4101a3b00000000000009cac0000_t
@@ -154,6 +157,7 @@ template:
   - trigger:
       - trigger: state
         entity_id:
+          - sensor.fridge_native_average_temperature
           - sensor.fridge_probe_temperature
       - trigger: time_pattern
         minutes: "/1"
@@ -194,6 +198,7 @@ template:
         entity_id:
           - sensor.fridge_t
           - sensor.ith_11_b_0e38_temperature
+          - sensor.kitchen_native_average_temperature
           - sensor.kitchen_thermometer_temperature
       - trigger: time_pattern
         minutes: "/1"
@@ -233,6 +238,7 @@ template:
       - trigger: state
         entity_id:
           - sensor.kitten_room_thermometer_temperature
+          - sensor.kittens_native_average_temperature
           - sensor.lionel_temperature_2
       - trigger: time_pattern
         minutes: "/1"
@@ -273,6 +279,7 @@ template:
         entity_id:
           - sensor.derry_temperature
           - sensor.ith_11_b_0090_temperature
+          - sensor.living_room_native_average_temperature
           - sensor.livingroom_echo_temperature
           - sensor.lr_plant_derry_temperature
           - sensor.otter_temp
@@ -314,6 +321,7 @@ template:
   - trigger:
       - trigger: state
         entity_id:
+          - sensor.master_bathroom_native_average_temperature
           - sensor.misty_temperature_2
       - trigger: time_pattern
         minutes: "/1"
@@ -356,6 +364,7 @@ template:
           - sensor.apollo_plt_1_a84e64_air_temperature
           - sensor.hippocrates_plant_temperature
           - sensor.hippocrates_temperature_2
+          - sensor.office_native_average_temperature
           - sensor.office_temp
           - sensor.office_temp1
           - sensor.sensorbox_aht20_temperature
@@ -399,6 +408,7 @@ template:
       - trigger: state
         entity_id:
           - sensor.outside_ith_11_b_12b4_temperature
+          - sensor.outside_native_average_temperature
       - trigger: time_pattern
         minutes: "/1"
       - trigger: homeassistant
@@ -440,6 +450,7 @@ template:
           - sensor.lb_feels_like_temperature
           - sensor.long_beach_waqi_temperature
           - sensor.openweathermap_temperature
+          - sensor.weather_native_average_temperature
       - trigger: time_pattern
         minutes: "/1"
       - trigger: homeassistant

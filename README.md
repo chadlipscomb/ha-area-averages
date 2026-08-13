@@ -13,6 +13,26 @@ correctly coloured core-only dashboard if those cards are missing.
 Config entry created 2026-08-12.
 Integration `0.3.0`, strategy `VERSION 3.0.0`.
 
+## Three implementations, one calculation
+
+| | `custom_components/` | `yaml-edition/` | `native-edition/` |
+|---|---|---|---|
+| Built from | a custom integration | template sensors + a Jinja macro | built-in Group helpers |
+| Dashboard | custom strategy (JS) | stored config + auto-entities | **core cards only** |
+| Auto-discovers by Area | yes, ~2 s | yes, ~1 min | no — static list |
+| `issue` / battery / staleness | yes | yes | **no** |
+| Needs custom components | yes | no | no |
+| Needs HACS cards | dashboard only | dashboard only | **no** |
+| Lives at | `/room-temperatures` | `/yaml-temperatures` | `/native-temperatures` |
+
+All three run side by side and agree on every mean. Each edition has a
+`compare.py` that checks itself against the integration — two independent
+implementations of one calculation are worth having precisely because they can
+be diffed. Run them after changing anything.
+
+The rest of this file describes the integration; each edition has its own
+README.
+
 ## The health model (read this first)
 
 Every member of an average lands in **exactly one** of three buckets, and the

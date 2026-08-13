@@ -99,7 +99,9 @@
     {%- if mu == '°C' and UNIT == '°F' -%}{%- set v = v * 1.8 + 32 -%}
     {%- elif mu == '°F' and UNIT == '°C' -%}{%- set v = (v - 32) / 1.8 -%}
     {%- endif -%}
-    {%- set ns2.live = ns2.live + [v | round(2)] -%}
+    {#- Unrounded: rounding each value before min/max/spread loses a cent
+        against the integration, which subtracts first and rounds last. -#}
+    {%- set ns2.live = ns2.live + [v] -%}
   {%- endif -%}
 {%- endfor -%}
 {%- set issues = ns.i_off + ns.i_stale + ns.i_batt -%}
@@ -111,8 +113,8 @@
       else ((n ~ ' of ' ~ mc ~ ' sensors') if n < mc else (mc ~ ' sensors'))) -%}
 {{- {
   'mean': ((ns2.live | sum) / n) | round(2) if n > 0 else none,
-  'minimum': ns2.live | min if n > 0 else none,
-  'maximum': ns2.live | max if n > 0 else none,
+  'minimum': (ns2.live | min) | round(2) if n > 0 else none,
+  'maximum': (ns2.live | max) | round(2) if n > 0 else none,
   'spread': ((ns2.live | max) - (ns2.live | min)) | round(2) if n > 1 else none,
   'member_count': mc,
   'reporting': n,
