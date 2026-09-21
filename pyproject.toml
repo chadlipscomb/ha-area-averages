@@ -1,0 +1,13 @@
+# Test configuration only -- the integration itself has no build step and no
+# dependencies (see custom_components/area_averages/manifest.json).
+#
+# The pure tests in tests/ import calc.py directly and need nothing but
+# pytest. The tests in tests/integration/ run a real Home Assistant and need
+# pytest-homeassistant-custom-component, which pins its own HA version:
+#
+#   uv venv --python 3.14 .venv
+#   uv pip install pytest-homeassistant-custom-component
+#   .venv/bin/python -m pytest
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

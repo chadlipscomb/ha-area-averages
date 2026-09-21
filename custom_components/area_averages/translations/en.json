@@ -1,28 +1,105 @@
 {
   "config": {
+    "step": {
+      "user": {
+        "title": "Area Averages",
+        "description": "Averages are added one at a time, so you choose which areas get one and what they measure. Auto-discovery can fill the list in for you from the areas you already have.",
+        "data": {
+          "auto_discover": "Discover averages automatically",
+          "auto_discover_classes": "Discover these sensor types"
+        },
+        "data_description": {
+          "auto_discover": "Creates an average for every area that has sensors of the types below, and for new areas as they appear. Each one shows up as its own entry you can edit or delete. Leave this off to add averages by hand.",
+          "auto_discover_classes": "Only used while auto-discovery is on. An average you add by hand can be of any supported type."
+        }
+      }
+    },
     "abort": {
-      "single_instance_allowed": "Area Averages is already configured."
+      "single_instance_allowed": "Area Averages is already configured. Add another average from its entry instead."
     }
   },
   "options": {
     "step": {
       "init": {
         "title": "Area Averages options",
-        "description": "One average sensor per area, per sensor type. Membership follows the entity registry, so anything you move into an area is picked up automatically.",
+        "description": "These settings apply to every average. To change which sensors go into one average, use the gear icon on its row.",
         "data": {
-          "device_classes": "Sensor types to average",
+          "auto_discover": "Discover averages automatically",
+          "auto_discover_classes": "Discover these sensor types",
           "stale_hours": "Flag a sensor as stale after (hours)",
           "battery_threshold": "Low battery threshold (%)",
           "trend_minutes": "Trend window (minutes)",
-          "exclude_label": "Label that excludes a sensor from averages"
+          "exclude_label": "Label that excludes a sensor from averages",
+          "ignored": "Averages auto-discovery must not re-create"
         },
         "data_description": {
-          "device_classes": "An average is created for every area that has at least one sensor of the selected types. Turning a type off removes its averages, including their history.",
+          "auto_discover": "Creates an average for every area that has sensors of the types below, and for new areas as they appear. Turning this off leaves the averages you already have; nothing is ever deleted automatically.",
+          "auto_discover_classes": "Only used while auto-discovery is on. An average you add by hand can be of any supported type.",
           "stale_hours": "Measured from a member's last numeric report, not from its last change — a sensor repeating the same value is not stale. Stale members are dropped from the average. A member that has never reported a number is listed as offline instead of stale, because there is no report to age.",
           "battery_threshold": "Members whose device has a battery level at or below this are listed in the issue attribute. Binary low-battery sensors are always reported.",
           "trend_minutes": "How far back the rising / falling / steady reading looks. Held in memory only, so the trend reads unknown for the first quarter hour after a restart.",
-          "exclude_label": "The label applies to an entity OR to its device — labelling the device excludes every measurement that device reports. Excluded sensors stay visible on the dashboard under \"Not in average\"; they are simply not counted."
+          "exclude_label": "Used by averages in exclude mode. The label applies to an entity OR to its device — labelling the device excludes every measurement that device reports. Excluded sensors stay visible on the dashboard under \"Not in average\"; they are simply not counted.",
+          "ignored": "These were discovered once and then deleted, so auto-discovery leaves them alone. Untick one to let it come back."
         }
+      }
+    }
+  },
+  "config_subentries": {
+    "average": {
+      "title": "Average",
+      "entry_type": "Average",
+      "initiate_flow": {
+        "user": "Add an average",
+        "reconfigure": "Reconfigure this average"
+      },
+      "step": {
+        "user": {
+          "title": "Which average?",
+          "description": "One average per area per sensor type — a Master Bathroom humidity average and a Master Bathroom temperature average are two separate entries.",
+          "data": {
+            "area_id": "Area",
+            "device_class": "What it measures"
+          },
+          "data_description": {
+            "area_id": "The average is named after this area and is assigned to it, so it shows up on area cards and to voice assistants.",
+            "device_class": "Every type has a fixed unit, and members reporting another unit are converted into it."
+          }
+        },
+        "members": {
+          "title": "Which sensors go in?",
+          "description": "{average}",
+          "data": {
+            "mode": "How members are chosen",
+            "include_entities": "Sensors to include",
+            "include_label": "Label that includes a sensor"
+          },
+          "data_description": {
+            "mode": "Everything in the area keeps following the entity registry, so a sensor you move into the area joins on its own. Only these sensors is a fixed list that ignores anything else in the area.",
+            "include_entities": "Only used in include mode. The list offers the sensors of this type that are in this area.",
+            "include_label": "Only used in include mode. Anything in the area carrying this label joins the average as well, so you can add sensors without editing this list."
+          }
+        },
+        "reconfigure": {
+          "title": "Which sensors go in?",
+          "description": "{average}. To move this average to another area, or change what it measures, delete it and add a new one — those two things are what the average is.",
+          "data": {
+            "mode": "How members are chosen",
+            "include_entities": "Sensors to include",
+            "include_label": "Label that includes a sensor"
+          },
+          "data_description": {
+            "mode": "Everything in the area keeps following the entity registry, so a sensor you move into the area joins on its own. Only these sensors is a fixed list that ignores anything else in the area.",
+            "include_entities": "Only used in include mode. The list offers the sensors of this type that are in this area.",
+            "include_label": "Only used in include mode. Anything in the area carrying this label joins the average as well, so you can add sensors without editing this list."
+          }
+        }
+      },
+      "error": {
+        "already_configured": "That area already has an average of this type. Edit the existing one instead."
+      },
+      "abort": {
+        "already_configured": "That area already has an average of this type.",
+        "reconfigure_successful": "The average was updated."
       }
     }
   },
@@ -35,6 +112,12 @@
         "carbon_dioxide": "CO2",
         "illuminance": "Illuminance",
         "pm25": "PM2.5"
+      }
+    },
+    "mode": {
+      "options": {
+        "exclude": "Everything in the area, minus the excluded",
+        "include": "Only these sensors"
       }
     }
   }

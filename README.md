@@ -11,7 +11,19 @@ every card it emits has a core-only equivalent and it degrades to a complete,
 correctly coloured core-only dashboard if those cards are missing.
 
 Config entry created 2026-08-12.
-Integration `0.3.0`, strategy `VERSION 3.0.0`.
+Integration `0.4.0`, strategy `VERSION 3.0.0`.
+
+## Tests
+
+```
+uv venv --python 3.14 .venv && uv pip install pytest-homeassistant-custom-component
+.venv/bin/python -m pytest
+```
+
+`tests/` is pure — it imports `calc.py` with no Home Assistant and covers what
+the two membership modes mean. `tests/integration/` runs a real Home Assistant
+and covers the flows, the subentry lifecycle, auto-discovery and the 1 → 2
+migration.
 
 ## Three implementations, one calculation
 
@@ -21,6 +33,7 @@ Integration `0.3.0`, strategy `VERSION 3.0.0`.
 | Dashboard | custom strategy (JS) | stored config + auto-entities | **core cards only** |
 | Auto-discovers by Area | yes, ~2 s | yes, ~1 min | no — static list |
 | `issue` / battery / staleness | yes | yes | **no** |
+| Per-area config, include mode | yes | no | no |
 | Needs custom components | yes | no | no |
 | Needs HACS cards | dashboard only | dashboard only | **no** |
 | Lives at | `/room-temperatures` | `/yaml-temperatures` | `/native-temperatures` |
@@ -76,18 +89,53 @@ mixed °C/°F members are converted first. `unknown` only when nothing reports.
 
 `sensors`, `excluded` and `offline` are excluded from the recorder.
 
+## One subentry per average
+
+Since 0.4.0 an average is a **config subentry**: its own row on the integration
+page with its own gear icon, the way Magic Areas does it. Adding one asks two
+questions — which area, and what it measures — so a room can have a temperature
+average, a humidity average, both or neither.
+
+The area and the device class are what the average *is*: together they set the
+`unique_id`, so the gear icon edits membership only. To move an average to
+another area, delete it and add a new one.
+
+**Auto-discovery** (off on a fresh install, on after upgrading from 0.3.x)
+creates a subentry for every area that has sensors of the configured types, and
+for new areas as they appear — so the list fills itself in and every discovered
+average is still a real row you can edit. Deleting one records it as *ignored*
+rather than discovering it again on the next registry change; untick it under
+"Averages auto-discovery must not re-create" to let it come back. Nothing is
+ever deleted automatically: turning discovery off leaves what it made.
+
 ## Membership
 
-Everything in the entity registry with the configured `device_class` whose
-entity (or device) sits in the area. Diagnostic/config-category entities (Zigbee
-LQI temps, radio chip temps, …) and disabled entities are never included.
-Membership refreshes live on any entity/device/area/label registry change — no
-restart needed.
+Each average picks its members one of two ways.
+
+| Mode | Members | `excluded` |
+|---|---|---|
+| **Everything in the area, minus the excluded** (default) | every sensor of that device class whose entity (or device) sits in the area | anything carrying the exclude label |
+| **Only these sensors** | exactly the entities picked, plus anything in the area carrying that average's include label | every other sensor of that type in the area |
+
+Exclude mode follows the entity registry, so a sensor moved into the area joins
+within seconds — no restart. Include mode is a fixed list that nothing can join
+on its own, which is the point of it; the include label is the escape hatch when
+you would rather tag sensors than edit a list.
+
+Diagnostic/config-category entities (Zigbee LQI temps, radio chip temps, …) and
+disabled entities are never members and are **not** listed in `excluded` either
+— they were never on offer, so the dashboard's "Not in average" list stays
+about sensors you chose to leave out. The one exception is an entity you picked
+by hand in include mode: if you went and chose it, you meant it.
 
 **Exclusions**: put the `exclude-average` label on an entity *or its device* and
 it leaves the average within seconds, listed in `excluded`. If the configured
-label matches nothing, the integration now logs a **warning** instead of
-silently excluding nothing.
+label matches nothing, the integration logs a **warning** instead of silently
+excluding nothing.
+
+An average whose area has no matching sensors is **kept**, reporting `unknown`
+and `no sensors reporting` — it is explicit configuration now, so it does not
+vanish on its own.
 
 Each average is auto-assigned to its area, so it appears on area cards and to
 voice assistants.
@@ -101,19 +149,36 @@ voice assistants.
   `input_boolean.show_offline_sensors` still works as a fallback and can be
   deleted.
 
-Turning a device class **off** in options now removes its averages from the
-entity registry instead of orphaning them. An average that comes back later with
-the same `unique_id` reclaims its entity_id and history.
+Deleting an average removes its entity from the registry rather than
+orphaning it. One that comes back later with the same `unique_id` reclaims its
+entity_id and history.
 
-## Options (Settings → Devices & Services → Area Averages → Configure)
+## Configuration
+
+**Per average** — the gear icon on its row:
+
+| Option | Notes |
+|---|---|
+| How members are chosen | exclude (default) or include; see Membership |
+| Sensors to include | include mode only; the picker offers that area's sensors of that type |
+| Label that includes a sensor | include mode only; anything in the area carrying it joins |
+
+**Shared by every average** — Settings → Devices & Services → Area Averages →
+Configure:
 
 | Option | Default | Notes |
 |---|---|---|
-| Sensor types to average | `temperature` | multi-select: humidity, pressure, CO2, illuminance, PM2.5 |
+| Discover averages automatically | off on a fresh install | on after migrating from 0.3.x |
+| Discover these sensor types | `temperature` | multi-select: humidity, pressure, CO2, illuminance, PM2.5. Only used while discovery is on — an average added by hand can be any supported type |
 | Stale after | 24 h | measured from the last *numeric* report |
 | Low battery threshold | 20 % | |
 | Trend window | 120 min | 15–720; bounds the in-memory sample deque |
 | Exclude label | `exclude-average` | rendered as a **label picker**, so it cannot be a typo |
+| Averages auto-discovery must not re-create | empty | discovered averages you deleted; untick one to let it back |
+
+Changing a shared setting reloads the integration. Adding, editing or deleting
+a *single* average does not — the other averages keep their in-memory trend
+history, which a reload would throw away.
 
 Every supported device class has a fixed unit (°F/%/psi/ppm/lx/µg/m³) — a
 MEASUREMENT sensor is never created unitless, which would make HA discard its
@@ -213,8 +278,14 @@ while pointing at a different room's outage.
   to preserve.
 - `deploy.sh` sets `COPYFILE_DISABLE=1`; without it macOS tar writes
   AppleDouble `._sensor.py` junk into the HA config dir on every deploy.
-- The config flow creates the entry with no questions, so it can be added
-  headlessly: `POST /api/config/config_entries/flow {"handler":"area_averages"}`.
+- The config flow asks two questions (auto-discovery on/off, and which types),
+  so adding it headlessly takes two POSTs to
+  `/api/config/config_entries/flow` — the second with
+  `{"auto_discover": false, "auto_discover_classes": ["temperature"]}`.
+- Upgrading from 0.3.x runs `async_migrate_entry`: every average already in the
+  entity registry is adopted as a subentry with the same `unique_id`, entity_id
+  and history, and auto-discovery is turned on because that is what 0.3.x did.
+  An average whose area no longer exists cannot be matched and is pruned.
 - Non-retained MQTT members read `unknown` for a minute or two after every HA
   restart, so their room briefly shows "no sensors reporting". It self-heals on
   the next publish; this is honest, not a bug.

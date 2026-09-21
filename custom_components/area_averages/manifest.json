@@ -1,7 +1,9 @@
 {
   "domain": "area_averages",
   "name": "Area Averages",
-  "codeowners": ["@chadlipscomb"],
+  "codeowners": [
+    "@chadlipscomb"
+  ],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/chadlipscomb/ha-area-averages",
@@ -9,5 +11,5 @@
   "iot_class": "calculated",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.3.0"
+  "version": "0.4.0"
 }

@@ -1,10 +1,16 @@
 """Sensor platform for Area Averages.
 
-One average sensor is created per (area, device class). Membership is
-resolved from the entity registry, so sensors added to an area are picked
-up automatically, and anything carrying the exclude label (on the entity
-or its device) is left out. Diagnostic/config-category entities (device
-chip temps, radio temps, ...) are never included.
+One average sensor is created per CONFIG SUBENTRY -- one row on the
+integration page, one sensor, one area, one device class. Which entities go
+into it is decided by the subentry's mode:
+
+  exclude    every sensor of that class in the area, minus anything
+             carrying the exclude label. The original behaviour.
+  include    only the entities the user picked, plus anything carrying the
+             subentry's include label.
+
+Membership is then resolved from the entity registry, so a sensor moved
+into the area is picked up automatically in exclude mode without a restart.
 
 The average is the mean of the members that are actually contributing a
 number right now. Members are always in exactly one of three buckets:
@@ -38,30 +44,31 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.const import (
     EVENT_HOMEASSISTANT_STARTED,
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
 )
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, State, callback
+from homeassistant.data_entry_flow import AbortFlow
 from homeassistant.helpers import (
     area_registry as ar,
     device_registry as dr,
     entity_registry as er,
     label_registry as lr,
 )
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import (
     async_call_later,
     async_track_state_change_event,
     async_track_time_interval,
 )
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
-from homeassistant.util import dt as dt_util, slugify
+from homeassistant.util import dt as dt_util
 from homeassistant.util.unit_conversion import PressureConverter, TemperatureConverter
 
-from . import calc
+from . import calc, registry
 from .const import (
     ATTR_EXCLUDED,
     ATTR_HEALTHY,
@@ -79,17 +86,30 @@ from .const import (
     ATTR_SUMMARY,
     ATTR_TREND,
     ATTR_TREND_RATE,
+    CONF_AREA_ID,
+    CONF_AUTO_DISCOVER,
+    CONF_AUTO_DISCOVER_CLASSES,
     CONF_BATTERY_THRESHOLD,
-    CONF_DEVICE_CLASSES,
+    CONF_DEVICE_CLASS,
     CONF_EXCLUDE_LABEL,
+    CONF_IGNORED,
+    CONF_INCLUDE_ENTITIES,
+    CONF_INCLUDE_LABEL,
+    CONF_MODE,
+    CONF_SOURCE,
     CONF_STALE_HOURS,
     CONF_TREND_MINUTES,
+    DATA_AUTO_CREATED,
+    DEFAULT_AUTO_DISCOVER,
     DEFAULT_BATTERY_THRESHOLD,
     DEFAULT_DEVICE_CLASSES,
     DEFAULT_EXCLUDE_LABEL,
     DEFAULT_STALE_HOURS,
     DEFAULT_TREND_MINUTES,
     DOMAIN,
+    RELOAD_OPTION_KEYS,
+    SOURCE_AUTO,
+    SUBENTRY_TYPE,
     SUPPORTED_DEVICE_CLASSES,
 )
 
@@ -119,42 +139,60 @@ try:  # available in newer cores; purely additive when it is
 except ImportError:  # pragma: no cover - depends on core version
     pass
 
-NICE_NAMES = {
-    "temperature": "Temperature",
-    "humidity": "Humidity",
-    "pressure": "Pressure",
-    "carbon_dioxide": "CO2",
-    "illuminance": "Illuminance",
-    "pm25": "PM2.5",
-}
 
+@dataclass
+class AverageConfig:
+    """What one subentry says an average IS.
 
-@callback
-def resolve_label_ids(hass: HomeAssistant, configured: str) -> set[str]:
-    """Label registry ids matching a configured label id, name or slug.
-
-    Deliberately forgiving: the option used to be free text, so an entry
-    saved as "exclude-average" must keep working after the picker lands.
-    Shared with the options flow so both agree on what a stored value means.
+    ``area_id`` and ``device_class`` are the average's identity -- they set
+    the unique_id, so the reconfigure flow refuses to change them.
     """
-    wanted = (configured or "").strip()
-    lowered = wanted.lower()
-    if not wanted:
-        return set()
-    ids: set[str] = set()
-    for label in lr.async_get(hass).labels.values():
-        if (
-            label.label_id == wanted
-            or label.name.strip().lower() == lowered
-            or label.label_id == slugify(lowered)
-        ):
-            ids.add(label.label_id)
-    return ids
+
+    subentry_id: str
+    area_id: str
+    device_class: str
+    mode: str = calc.MODE_EXCLUDE
+    include_entities: tuple[str, ...] = ()
+    include_label: str | None = None
+    source: str = SOURCE_AUTO
+
+    @classmethod
+    def from_subentry(cls, subentry: ConfigSubentry) -> AverageConfig | None:
+        """Read a subentry, or None when its data is unusable."""
+        data = subentry.data
+        area_id = str(data.get(CONF_AREA_ID) or "")
+        device_class = str(data.get(CONF_DEVICE_CLASS) or "")
+        if not area_id or not device_class:
+            _LOGGER.warning(
+                "Area Averages: ignoring subentry %s (%s) -- it has no area or "
+                "no device class",
+                subentry.subentry_id,
+                subentry.title,
+            )
+            return None
+        mode = str(data.get(CONF_MODE) or calc.MODE_EXCLUDE)
+        if mode not in calc.MODES:
+            mode = calc.MODE_EXCLUDE
+        return cls(
+            subentry_id=subentry.subentry_id,
+            area_id=area_id,
+            device_class=device_class,
+            mode=mode,
+            include_entities=tuple(
+                str(entity_id) for entity_id in data.get(CONF_INCLUDE_ENTITIES) or ()
+            ),
+            include_label=data.get(CONF_INCLUDE_LABEL) or None,
+            source=str(data.get(CONF_SOURCE) or SOURCE_AUTO),
+        )
+
+    @property
+    def key(self) -> str:
+        return calc.subentry_key(self.area_id, self.device_class)
 
 
 @dataclass
 class Membership:
-    """Resolved membership of one (area, device class) bucket."""
+    """Resolved membership of one average."""
 
     members: list[str] = field(default_factory=list)
     batteries: dict[str, list[str]] = field(default_factory=dict)
@@ -175,7 +213,7 @@ class LastNumericData(ExtraStoredData):
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the platform and start the area manager."""
     manager = AreaAveragesManager(hass, entry, async_add_entities)
@@ -190,28 +228,27 @@ async def async_setup_entry(
 
 
 class AreaAveragesManager:
-    """Keeps the set of average sensors in sync with the registries."""
+    """Keeps one sensor per subentry, and their membership, up to date."""
 
     def __init__(
         self,
         hass: HomeAssistant,
         entry: ConfigEntry,
-        async_add_entities: AddEntitiesCallback,
+        async_add_entities: AddConfigEntryEntitiesCallback,
     ) -> None:
         self.hass = hass
         self.entry = entry
         self._async_add_entities = async_add_entities
-        self._entities: dict[tuple[str, str], AreaAverageSensor] = {}
+        #: One sensor per subentry, keyed by subentry_id.
+        self._entities: dict[str, AreaAverageSensor] = {}
         self._pending_refresh: CALLBACK_TYPE | None = None
-        self._exclude_label_ids: set[str] = set()
+        self._exclude_label_ids: frozenset[str] = frozenset()
+        self._label_cache: dict[str, frozenset[str]] = {}
         # Reference point for seeding staleness clocks: anything a member
         # state reported before this belongs to a previous HA run.
         self.started_at = dt_util.utcnow()
 
         options = entry.options
-        self.device_classes: list[str] = list(
-            options.get(CONF_DEVICE_CLASSES, DEFAULT_DEVICE_CLASSES)
-        )
         self.stale_hours: float = _as_float(
             options.get(CONF_STALE_HOURS), DEFAULT_STALE_HOURS
         )
@@ -228,10 +265,20 @@ class AreaAveragesManager:
                 _as_float(options.get(CONF_TREND_MINUTES), DEFAULT_TREND_MINUTES),
             ),
         )
+        self.auto_discover: bool = bool(
+            options.get(CONF_AUTO_DISCOVER, DEFAULT_AUTO_DISCOVER)
+        )
+        self.auto_discover_classes: list[str] = [
+            device_class
+            for device_class in options.get(
+                CONF_AUTO_DISCOVER_CLASSES, DEFAULT_DEVICE_CLASSES
+            )
+            if device_class in SUPPORTED_DEVICE_CLASSES
+        ]
 
     async def async_start(self) -> None:
-        """Resolve initial membership and subscribe to registry changes."""
-        self._resolve_exclude_label()
+        """Build the sensors, subscribe to changes, then discover."""
+        self._resolve_labels()
 
         for event_type in (
             er.EVENT_ENTITY_REGISTRY_UPDATED,
@@ -252,17 +299,20 @@ class AreaAveragesManager:
                 )
             )
         self.entry.async_on_unload(self._cancel_pending_refresh)
-        self._refresh()
+
+        self._reconcile()
         self._prune_orphans()
+        self._run_discovery()
 
         _LOGGER.info(
-            "Area Averages started: device classes %s, exclude label %r -> %s, "
-            "%d averages across %d areas (stale after %s h, trend window %s min)",
-            self.device_classes,
+            "Area Averages started: %d averages across %d areas, exclude label "
+            "%r -> %s, auto-discover %s%s (stale after %s h, trend window %s min)",
+            len(self._entities),
+            len({entity.config.area_id for entity in self._entities.values()}),
             self.exclude_label,
             sorted(self._exclude_label_ids) or "no matching label",
-            len(self._entities),
-            len({area_id for area_id, _ in self._entities}),
+            "on" if self.auto_discover else "off",
+            f" for {self.auto_discover_classes}" if self.auto_discover else "",
             self.stale_hours,
             self.trend_minutes,
         )
@@ -278,7 +328,57 @@ class AreaAveragesManager:
     @callback
     def _handle_registry_event(self, event: Event) -> None:
         if event.event_type == lr.EVENT_LABEL_REGISTRY_UPDATED:
-            self._resolve_exclude_label()
+            self._resolve_labels()
+        self._schedule_refresh()
+
+    @callback
+    def options_need_reload(self, entry: ConfigEntry) -> bool:
+        """True when a setting this manager CACHED has changed.
+
+        Adding, editing or deleting one average must not tear down every
+        other average in the house -- that would throw away their in-memory
+        trend history for no reason.
+        """
+        current = {
+            CONF_STALE_HOURS: self.stale_hours,
+            CONF_BATTERY_THRESHOLD: self.battery_threshold,
+            CONF_EXCLUDE_LABEL: self.exclude_label,
+            CONF_TREND_MINUTES: self.trend_minutes,
+            CONF_AUTO_DISCOVER: self.auto_discover,
+            CONF_AUTO_DISCOVER_CLASSES: self.auto_discover_classes,
+        }
+        options = entry.options
+        for key in RELOAD_OPTION_KEYS:
+            if key not in options:
+                continue
+            stored: Any = options[key]
+            if key in (CONF_STALE_HOURS, CONF_BATTERY_THRESHOLD, CONF_TREND_MINUTES):
+                stored = _as_float(stored, float(current[key]))
+                if key == CONF_TREND_MINUTES:
+                    stored = min(TREND_MINUTES_MAX, max(TREND_MINUTES_MIN, stored))
+            elif key == CONF_AUTO_DISCOVER:
+                stored = bool(stored)
+            elif key == CONF_AUTO_DISCOVER_CLASSES:
+                stored = [
+                    device_class
+                    for device_class in stored
+                    if device_class in SUPPORTED_DEVICE_CLASSES
+                ]
+            elif key == CONF_EXCLUDE_LABEL:
+                stored = str(stored)
+            if stored != current[key]:
+                return True
+        return False
+
+    @callback
+    def handle_entry_update(self) -> None:
+        """A subentry was added, edited or deleted. Sync without a reload.
+
+        Immediately, so a newly added average shows up straight away; the
+        debounced pass afterwards is what runs discovery, and collapses the
+        burst of updates discovery itself causes.
+        """
+        self._reconcile()
         self._schedule_refresh()
 
     @callback
@@ -292,7 +392,8 @@ class AreaAveragesManager:
     @callback
     def _run_refresh(self, _now: Any) -> None:
         self._pending_refresh = None
-        self._refresh()
+        self._reconcile()
+        self._run_discovery()
 
     @callback
     def _handle_periodic(self, _arg: Any = None) -> None:
@@ -302,10 +403,11 @@ class AreaAveragesManager:
     # --------------------------------------------------------- membership
 
     @callback
-    def _resolve_exclude_label(self) -> None:
-        """Map the configured label (id, name or slug) to label registry ids."""
+    def _resolve_labels(self) -> None:
+        """Map the configured labels (id, name or slug) to registry ids."""
+        self._label_cache = {}
         configured = self.exclude_label.strip()
-        ids = resolve_label_ids(self.hass, configured)
+        ids = self._label_ids(configured)
         if configured and not ids:
             # Silence here is dangerous: every exclusion vanishes and an
             # empty `excluded` list is indistinguishable from healthy.
@@ -318,143 +420,247 @@ class AreaAveragesManager:
         self._exclude_label_ids = ids
 
     @callback
-    def _battery_entities(
-        self, ent_reg: er.EntityRegistry, device_id: str
-    ) -> list[str]:
-        """Battery level / low-battery entities that live on the same device."""
-        found: list[str] = []
-        for reg_entry in er.async_entries_for_device(ent_reg, device_id):
-            if reg_entry.domain not in ("sensor", "binary_sensor"):
-                continue
-            if (reg_entry.device_class or reg_entry.original_device_class) == "battery":
-                found.append(reg_entry.entity_id)
-        return found
-
-    @callback
-    def _collect(self) -> dict[tuple[str, str], Membership]:
-        """Resolve membership for every (area, device class) bucket."""
-        ent_reg = er.async_get(self.hass)
-        dev_reg = dr.async_get(self.hass)
-        wanted = set(self.device_classes)
-        buckets: dict[tuple[str, str], Membership] = {}
-
-        for reg_entry in list(ent_reg.entities.values()):
-            if reg_entry.domain != "sensor" or reg_entry.platform == DOMAIN:
-                continue
-            if reg_entry.disabled_by is not None:
-                continue
-            if reg_entry.entity_category is not None:
-                continue
-            device_class = reg_entry.device_class or reg_entry.original_device_class
-            if device_class not in wanted:
-                continue
-
-            device = (
-                dev_reg.async_get(reg_entry.device_id)
-                if reg_entry.device_id
-                else None
+    def _label_ids(self, configured: str | None) -> frozenset[str]:
+        """Resolved label ids for a configured label, memoised per refresh."""
+        text = (configured or "").strip()
+        if not text:
+            return frozenset()
+        if text not in self._label_cache:
+            self._label_cache[text] = frozenset(
+                registry.resolve_label_ids(self.hass, text)
             )
-            area_id = reg_entry.area_id or (device.area_id if device else None)
-            if not area_id:
-                continue
-
-            labels = set(reg_entry.labels)
-            if device:
-                labels |= set(device.labels)
-
-            bucket = buckets.setdefault((area_id, device_class), Membership())
-            if labels & self._exclude_label_ids:
-                bucket.excluded.append(reg_entry.entity_id)
-                continue
-            bucket.members.append(reg_entry.entity_id)
-            if reg_entry.device_id:
-                batteries = self._battery_entities(ent_reg, reg_entry.device_id)
-                if batteries:
-                    bucket.batteries[reg_entry.entity_id] = batteries
-
-        for bucket in buckets.values():
-            bucket.members.sort()
-            bucket.excluded.sort()
-        return buckets
+        return self._label_cache[text]
 
     @callback
-    def _refresh(self) -> None:
-        """Create/update/remove average sensors to match the registries."""
-        buckets = self._collect()
-        desired = {key: value for key, value in buckets.items() if value.members}
-        area_reg = ar.async_get(self.hass)
-
-        new_entities: list[AreaAverageSensor] = []
-        for key, membership in desired.items():
-            if key in self._entities:
-                self._entities[key].async_set_membership(membership)
+    def _configs(self) -> dict[str, AverageConfig]:
+        """Every usable average subentry, keyed by subentry_id."""
+        configs: dict[str, AverageConfig] = {}
+        for subentry in self.entry.subentries.values():
+            if subentry.subentry_type != SUBENTRY_TYPE:
                 continue
-            if area_reg.async_get_area(key[0]) is None:
-                continue
-            sensor = AreaAverageSensor(self, key[0], key[1], membership)
-            self._entities[key] = sensor
-            new_entities.append(sensor)
+            config = AverageConfig.from_subentry(subentry)
+            if config is not None:
+                configs[subentry.subentry_id] = config
+        return configs
 
-        for key in [k for k in self._entities if k not in desired]:
-            entity = self._entities.pop(key)
+    @callback
+    def _reconcile(self) -> None:
+        """One pass: one sensor per subentry, each with fresh membership.
+
+        Membership is resolved BEFORE a new sensor is handed to Home
+        Assistant, so the entity never has to be written twice -- once
+        empty, once correct -- and never publishes a momentary
+        "no sensors reporting".
+        """
+        configs = self._configs()
+
+        for subentry_id in [k for k in self._entities if k not in configs]:
+            entity = self._entities.pop(subentry_id)
             self.hass.async_create_task(self._async_remove_entity(entity))
 
-        if new_entities:
-            self._async_add_entities(new_entities)
+        if not configs:
+            return
+
+        index = registry.candidate_index(
+            self.hass, {config.device_class for config in configs.values()}
+        )
+
+        for subentry_id, config in configs.items():
+            candidates = index.get((config.area_id, config.device_class), [])
+            members, excluded = calc.select_members(
+                candidates,
+                config.mode,
+                include_entities=config.include_entities,
+                include_label_ids=self._label_ids(config.include_label),
+                exclude_label_ids=self._exclude_label_ids,
+            )
+            membership = Membership(
+                members=members,
+                batteries=registry.battery_entities(self.hass, members),
+                excluded=excluded,
+            )
+
+            entity = self._entities.get(subentry_id)
+            if entity is not None:
+                entity.async_set_config(config)
+                entity.async_set_membership(membership)
+                continue
+
+            entity = AreaAverageSensor(self, config)
+            entity.async_set_membership(membership)
+            self._entities[subentry_id] = entity
+            # One call per subentry: this is what puts the entity on that
+            # row of the integration page.
+            self._async_add_entities([entity], config_subentry_id=subentry_id)
 
     @callback
     def _prune_orphans(self) -> None:
         """Drop registry entries left behind by a previous configuration.
 
-        An options change reloads the entry, so the in-memory bookkeeping in
-        _refresh() starts empty and cannot notice that (say) every humidity
-        average is gone. Those entries would otherwise stay in the registry
-        forever, owned by this entry and served as unavailable.
+        Deleting a subentry already removes its entity (core clears the
+        registry for us), so this only catches leftovers from before the
+        move to subentries, or from a migration that could not match a
+        unique_id.
 
-        Only genuine removals are deleted: an average that comes back later
-        with the same unique_id reclaims its old entity_id and history.
+        An average that comes back later with the same unique_id reclaims
+        its old entity_id and history, so only genuine strangers go.
         """
-        if self.device_classes and not self._entities:
-            # Something is wrong (registries not ready, every area lost its
-            # members at once). Deleting registry entries here would throw
-            # away real history; leaving orphans is the cheaper mistake.
+        if self.entry.subentries and not self._entities:
+            # Something is wrong (registries not ready, every subentry
+            # unreadable). Deleting registry entries here would throw away
+            # real history; leaving orphans is the cheaper mistake.
             _LOGGER.warning(
-                "Area Averages: %s configured but no averages resolved — "
-                "skipping orphan cleanup rather than removing entities",
-                self.device_classes,
+                "Area Averages: %d subentries configured but no averages "
+                "resolved — skipping orphan cleanup rather than removing "
+                "entities",
+                len(self.entry.subentries),
             )
             return
         ent_reg = er.async_get(self.hass)
         desired = {
-            calc.average_unique_id(area_id, device_class)
-            for area_id, device_class in self._entities
+            calc.average_unique_id(entity.config.area_id, entity.config.device_class)
+            for entity in self._entities.values()
         }
         existing = [
-            (entry.entity_id, entry.unique_id)
-            for entry in er.async_entries_for_config_entry(
+            (reg_entry.entity_id, reg_entry.unique_id)
+            for reg_entry in er.async_entries_for_config_entry(
                 ent_reg, self.entry.entry_id
             )
-            # Only our own average sensors; the config switch lives on the
+            # Only our own average sensors; the config switches live on the
             # same config entry and must never be pruned.
-            if entry.domain == "sensor"
-            and entry.platform == DOMAIN
-            and str(entry.unique_id).endswith("_average")
+            if reg_entry.domain == "sensor"
+            and reg_entry.platform == DOMAIN
+            and str(reg_entry.unique_id).endswith("_average")
         ]
         for entity_id in calc.orphan_unique_ids(desired, existing):
             _LOGGER.info(
                 "Area Averages: removing orphaned entity %s (no longer produced "
-                "by the current options)",
+                "by the current configuration)",
                 entity_id,
             )
             ent_reg.async_remove(entity_id)
 
     async def _async_remove_entity(self, entity: AreaAverageSensor) -> None:
-        """Remove an average whose area lost all members (or was deleted)."""
-        entity_id = entity.entity_id
-        await entity.async_remove(force_remove=True)
-        ent_reg = er.async_get(self.hass)
-        if entity_id and ent_reg.async_get(entity_id) is not None:
-            ent_reg.async_remove(entity_id)
+        """Remove the sensor of a subentry the user deleted.
+
+        Core removes the registry entry when the subentry goes, and the
+        entity then removes itself; async_remove is idempotent, so this is
+        belt and braces for an entity that never had a registry entry.
+        """
+        try:
+            await entity.async_remove(force_remove=True)
+        except Exception:  # noqa: BLE001 - never let cleanup break a reload
+            _LOGGER.debug(
+                "Area Averages: %s was already gone", entity.entity_id, exc_info=True
+            )
+
+    # ------------------------------------------------------- discovery
+
+    @callback
+    def _run_discovery(self) -> None:
+        """Materialise a subentry for every average worth having.
+
+        Deliberately visible: a discovered average is a real row that can
+        be edited or deleted like any other. Deleting one records it as
+        ignored, so discovery does not simply put it back.
+        """
+        if not self.auto_discover:
+            return
+
+        configs = self._configs()
+        existing_keys = {config.key for config in configs.values()}
+        self._record_deletions(existing_keys)
+
+        ignored = {str(key) for key in self.entry.options.get(CONF_IGNORED, [])}
+        skip = ignored | existing_keys
+        area_reg = ar.async_get(self.hass)
+        index = registry.candidate_index(self.hass, set(self.auto_discover_classes))
+
+        created: list[str] = []
+        for (area_id, device_class), candidates in sorted(index.items()):
+            key = calc.subentry_key(area_id, device_class)
+            if key in skip or area_reg.async_get_area(area_id) is None:
+                continue
+            members, _ = calc.select_members(
+                candidates,
+                calc.MODE_EXCLUDE,
+                exclude_label_ids=self._exclude_label_ids,
+            )
+            if not members:
+                continue
+            subentry = ConfigSubentry(
+                data={
+                    CONF_AREA_ID: area_id,
+                    CONF_DEVICE_CLASS: device_class,
+                    CONF_MODE: calc.MODE_EXCLUDE,
+                    CONF_INCLUDE_ENTITIES: [],
+                    CONF_INCLUDE_LABEL: None,
+                    CONF_SOURCE: SOURCE_AUTO,
+                },
+                subentry_type=SUBENTRY_TYPE,
+                title=calc.average_title(
+                    area_reg.async_get_area(area_id).name, device_class
+                ),
+                unique_id=key,
+            )
+            try:
+                self.hass.config_entries.async_add_subentry(self.entry, subentry)
+            except AbortFlow:
+                # Raced with someone adding the same average by hand.
+                continue
+            created.append(key)
+
+        if not created:
+            return
+        _LOGGER.info(
+            "Area Averages: auto-discovered %d average(s): %s",
+            len(created),
+            ", ".join(created),
+        )
+        self._remember_auto_created(created)
+        # Build the sensors here rather than waiting for the update listener:
+        # the first discovery happens during setup, before that listener is
+        # registered, and its averages must not wait for the next event.
+        self._reconcile()
+
+    @callback
+    def _record_deletions(self, existing_keys: set[str]) -> None:
+        """A discovered average the user deleted must stay deleted."""
+        auto_created = [str(key) for key in self.entry.data.get(DATA_AUTO_CREATED, [])]
+        deleted = [key for key in auto_created if key not in existing_keys]
+        if not deleted:
+            return
+        ignored = {str(key) for key in self.entry.options.get(CONF_IGNORED, [])}
+        _LOGGER.info(
+            "Area Averages: %s was deleted and will not be auto-discovered again "
+            "until it is un-ignored in the options",
+            ", ".join(sorted(deleted)),
+        )
+        self.hass.config_entries.async_update_entry(
+            self.entry,
+            data={
+                **self.entry.data,
+                DATA_AUTO_CREATED: [
+                    key for key in auto_created if key in existing_keys
+                ],
+            },
+            options={
+                **self.entry.options,
+                CONF_IGNORED: sorted(ignored | set(deleted)),
+            },
+        )
+
+    @callback
+    def _remember_auto_created(self, created: list[str]) -> None:
+        """Record what discovery made, so a later deletion can be noticed."""
+        auto_created = {str(key) for key in self.entry.data.get(DATA_AUTO_CREATED, [])}
+        self.hass.config_entries.async_update_entry(
+            self.entry,
+            data={
+                **self.entry.data,
+                DATA_AUTO_CREATED: sorted(auto_created | set(created)),
+            },
+        )
 
     # ------------------------------------------------------- diagnostics
 
@@ -463,14 +669,31 @@ class AreaAveragesManager:
         """Snapshot for diagnostics.py (no I/O, safe on the event loop)."""
         return {
             "options": {
-                CONF_DEVICE_CLASSES: self.device_classes,
                 CONF_STALE_HOURS: self.stale_hours,
                 CONF_BATTERY_THRESHOLD: self.battery_threshold,
                 CONF_EXCLUDE_LABEL: self.exclude_label,
                 CONF_TREND_MINUTES: self.trend_minutes,
+                CONF_AUTO_DISCOVER: self.auto_discover,
+                CONF_AUTO_DISCOVER_CLASSES: self.auto_discover_classes,
+                CONF_IGNORED: sorted(
+                    str(key) for key in self.entry.options.get(CONF_IGNORED, [])
+                ),
             },
+            "auto_created": sorted(
+                str(key) for key in self.entry.data.get(DATA_AUTO_CREATED, [])
+            ),
             "exclude_label_ids": sorted(self._exclude_label_ids),
             "started_at": self.started_at.isoformat(),
+            "subentries": [
+                {
+                    "subentry_id": subentry.subentry_id,
+                    "title": subentry.title,
+                    "unique_id": subentry.unique_id,
+                    "data": dict(subentry.data),
+                }
+                for subentry in self.entry.subentries.values()
+                if subentry.subentry_type == SUBENTRY_TYPE
+            ],
             "averages": [
                 entity.diagnostics() for entity in self._entities.values()
             ],
@@ -487,7 +710,7 @@ def _as_float(value: Any, default: float) -> float:
 
 
 class AreaAverageSensor(SensorEntity, RestoreEntity):
-    """Mean of the reporting sensors of one device class in one area."""
+    """Mean of the reporting members of one average."""
 
     _attr_should_poll = False
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -496,14 +719,13 @@ class AreaAverageSensor(SensorEntity, RestoreEntity):
     def __init__(
         self,
         manager: AreaAveragesManager,
-        area_id: str,
-        device_class: str,
-        membership: Membership,
+        config: AverageConfig,
     ) -> None:
         self._manager = manager
-        self._area_id = area_id
-        self._device_class_key = device_class
-        self._membership = membership
+        self.config = config
+        self._area_id = config.area_id
+        self._device_class_key = config.device_class
+        self._membership = Membership()
         self._unsub_state: CALLBACK_TYPE | None = None
         self._last_numeric: dict[str, Any] = {}
         self._trend_samples: deque[tuple[float, float]] = deque(
@@ -511,19 +733,21 @@ class AreaAverageSensor(SensorEntity, RestoreEntity):
         )
         self._warned_units: set[tuple[str, str]] = set()
 
-        self._attr_unique_id = calc.average_unique_id(area_id, device_class)
+        self._attr_unique_id = calc.average_unique_id(
+            config.area_id, config.device_class
+        )
         try:
-            self._attr_device_class = SensorDeviceClass(device_class)
+            self._attr_device_class = SensorDeviceClass(config.device_class)
         except ValueError:
             self._attr_device_class = None
-        if device_class in SUPPORTED_DEVICE_CLASSES:
+        if config.device_class in SUPPORTED_DEVICE_CLASSES:
             # Icons come from icons.json rather than the dashboard.
-            self._attr_translation_key = device_class
+            self._attr_translation_key = config.device_class
         # Every supported device class has a fixed unit. A MEASUREMENT
         # sensor that starts unitless and later adopts a member's unit makes
         # the recorder throw away its long-term statistics.
         self._attr_native_unit_of_measurement = calc.fixed_unit(
-            device_class,
+            config.device_class,
             manager.hass.config.units.temperature_unit,
             manager.hass.config.units.pressure_unit,
         )
@@ -537,11 +761,7 @@ class AreaAverageSensor(SensorEntity, RestoreEntity):
     def _refresh_name(self) -> None:
         area = ar.async_get(self._manager.hass).async_get_area(self._area_id)
         area_name = area.name if area else self._area_id
-        nice = NICE_NAMES.get(
-            self._device_class_key,
-            self._device_class_key.replace("_", " ").title(),
-        )
-        self._attr_name = f"{area_name} Average {nice}"
+        self._attr_name = calc.average_title(area_name, self._device_class_key)
 
     @staticmethod
     def _numeric_value(state: State) -> float | None:
@@ -664,6 +884,12 @@ class AreaAverageSensor(SensorEntity, RestoreEntity):
     @callback
     def _handle_member_change(self, _event: Event) -> None:
         self._recompute()
+
+    @callback
+    def async_set_config(self, config: AverageConfig) -> None:
+        """Called by the manager when the subentry was edited."""
+        self.config = config
+        self._refresh_name()
 
     @callback
     def async_set_membership(self, membership: Membership) -> None:
@@ -862,8 +1088,13 @@ class AreaAverageSensor(SensorEntity, RestoreEntity):
         return {
             "entity_id": self.entity_id,
             "unique_id": self._attr_unique_id,
+            "subentry_id": self.config.subentry_id,
             "area_id": self._area_id,
             "device_class": self._device_class_key,
+            "mode": self.config.mode,
+            "include_entities": list(self.config.include_entities),
+            "include_label": self.config.include_label,
+            "source": self.config.source,
             "unit": self._attr_native_unit_of_measurement,
             "state": self._attr_native_value,
             "members": members,

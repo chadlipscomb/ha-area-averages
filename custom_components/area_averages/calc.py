@@ -372,6 +372,115 @@ def healthy_state(reporting: int, issues: Sequence[str]) -> bool:
     return live > 0 and not issues
 
 
+# ---------------------------------------------------------------------- name
+
+#: How each device class is spelled in a sensor name and a subentry title.
+NICE_NAMES = {
+    "temperature": "Temperature",
+    "humidity": "Humidity",
+    "pressure": "Pressure",
+    "carbon_dioxide": "CO2",
+    "illuminance": "Illuminance",
+    "pm25": "PM2.5",
+}
+
+
+def nice_name(device_class: str) -> str:
+    """"carbon_dioxide" -> "CO2"; anything unknown -> Title Case."""
+    text = str(device_class or "")
+    return NICE_NAMES.get(text, text.replace("_", " ").title())
+
+
+def average_title(area_name: str, device_class: str) -> str:
+    """The name of an average -- "Master Bathroom Average Humidity".
+
+    One definition, used for both the entity name and the subentry title so
+    the integration page and the entity list cannot disagree.
+    """
+    return f"{area_name} Average {nice_name(device_class)}"
+
+
+# ---------------------------------------------------------------- selection
+
+#: Every candidate in the area is a member unless it carries the exclude
+#: label. This is the original behaviour and stays the default.
+MODE_EXCLUDE = "exclude"
+#: Only the entities the user picked (or labelled) are members.
+MODE_INCLUDE = "include"
+
+MODES = (MODE_EXCLUDE, MODE_INCLUDE)
+
+
+class Candidate(NamedTuple):
+    """One entity that could belong to an average, as the registry sees it.
+
+    ``labels`` is the union of the entity's own labels and its device's --
+    labelling a device excludes (or includes) everything it reports.
+    ``entity_category`` is None for a normal sensor and "diagnostic" or
+    "config" for the housekeeping entities a device also publishes (radio
+    chip temperatures, Zigbee LQI, ...).
+    """
+
+    entity_id: str
+    labels: frozenset
+    entity_category: str | None
+
+
+def select_members(
+    candidates: Iterable[Sequence],
+    mode: str,
+    include_entities: Iterable[str] = (),
+    include_label_ids: Iterable[str] = (),
+    exclude_label_ids: Iterable[str] = (),
+) -> tuple[list[str], list[str]]:
+    """Split the candidates of one average into (members, excluded).
+
+    EXCLUDE mode -- every candidate is a member unless it carries the
+    exclude label, in which case it lands in ``excluded``.
+
+    INCLUDE mode -- a candidate is a member only if it was picked by
+    entity_id or carries the include label; every other candidate lands in
+    ``excluded``.
+
+    Diagnostic and config entities are dropped from BOTH lists: they were
+    never offered to the user, so calling them "excluded" would put radio
+    chip temperatures on the dashboard's "Not in average" list. The one
+    exception is an entity the user picked or labelled by hand in include
+    mode -- if you went and chose it, you meant it.
+
+    Both lists are sorted and disjoint. An unknown mode is treated as
+    exclude: a typo in stored data must never silently empty an average.
+    """
+    picked = {str(entity_id) for entity_id in include_entities or ()}
+    include_labels = frozenset(include_label_ids or ())
+    exclude_labels = frozenset(exclude_label_ids or ())
+    include_mode = mode == MODE_INCLUDE
+
+    members: set[str] = set()
+    excluded: set[str] = set()
+
+    for candidate in candidates or ():
+        entity_id = str(candidate[0])
+        labels = frozenset(candidate[1] or ())
+        category = candidate[2]
+
+        if include_mode:
+            if entity_id in picked or (labels & include_labels):
+                members.add(entity_id)
+            elif category is None:
+                excluded.add(entity_id)
+            continue
+
+        if category is not None:
+            continue
+        if labels & exclude_labels:
+            excluded.add(entity_id)
+        else:
+            members.add(entity_id)
+
+    return sorted(members), sorted(excluded - members)
+
+
 # ------------------------------------------------------------------ registry
 
 
@@ -394,3 +503,45 @@ def orphan_unique_ids(
     return [
         entity_id for entity_id, unique_id in existing if unique_id not in wanted
     ]
+
+
+def subentry_key(area_id: str, device_class: str) -> str:
+    """Stable key for one (area, device class) average.
+
+    "|" is not legal in a slug, so it cannot collide with either half --
+    unlike "_", which appears inside both ``master_bathroom`` and
+    ``carbon_dioxide``. Used as the subentry unique_id and as the entry in
+    the auto-discovery bookkeeping lists.
+    """
+    return f"{area_id}|{device_class}"
+
+
+def parse_subentry_key(key: str) -> tuple[str, str] | None:
+    """(area_id, device_class) from a key, or None when it is junk."""
+    parts = str(key or "").split("|")
+    if len(parts) != 2 or not parts[0] or not parts[1]:
+        return None
+    return (parts[0], parts[1])
+
+
+def match_average_unique_id(
+    unique_id: str,
+    area_ids: Iterable[str],
+    device_classes: Iterable[str],
+) -> tuple[str, str] | None:
+    """Recover (area_id, device_class) from an average's unique_id.
+
+    Used by the migration to attach registry entities created before
+    subentries existed. Never splits on "_" -- it rebuilds the candidate
+    ids and compares, and prefers the LONGEST matching area so that
+    ``master_bathroom`` wins over ``master``.
+    """
+    text = str(unique_id or "")
+    best: tuple[str, str] | None = None
+    for area_id in area_ids or ():
+        for device_class in device_classes or ():
+            if average_unique_id(area_id, device_class) != text:
+                continue
+            if best is None or len(area_id) > len(best[0]):
+                best = (area_id, device_class)
+    return best
