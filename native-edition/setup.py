@@ -204,19 +204,76 @@ def set_group_options(entry_id: str, members: list[str]) -> None:
         raise RuntimeError(f"group options failed for {entry_id}: {result}")
 
 
+TOGGLES = [
+    ("na_show_sensors", "Native dashboard — show all sensors", "mdi:format-list-bulleted"),
+    ("na_show_offline", "Native dashboard — show offline sensors", "mdi:lan-disconnect"),
+]
+
+
+def _input_boolean_entity(registry: list[dict], unique_id: str) -> str | None:
+    """The entity_id of the input_boolean whose collection id is unique_id."""
+    for entry in registry:
+        if entry.get("platform") == "input_boolean" and entry.get("unique_id") == unique_id:
+            return entry["entity_id"]
+    return None
+
+
 def ensure_toggles(apply: bool) -> None:
-    existing = {h["id"] for h in ws([{"type": "input_boolean/list"}])[0]}
-    wanted = [
-        ("na_show_sensors", "Native dashboard — show all sensors", "mdi:format-list-bulleted"),
-        ("na_show_offline", "Native dashboard — show offline sensors", "mdi:lan-disconnect"),
-    ]
-    for object_id, name, icon in wanted:
-        if object_id in existing:
-            print(f"  toggle {object_id} already exists")
+    """Create the two reveal helpers with the entity_ids the dashboard uses.
+
+    Two things make this fiddly, and both have bitten:
+
+      * `input_boolean/create` takes no object_id -- HA slugifies the NAME, so
+        "Native dashboard - show all sensors" lands on
+        input_boolean.native_dashboard_show_all_sensors, not the id the
+        dashboard references. It has to be renamed into place afterwards, or
+        every entity ref on the generated dashboard points at nothing.
+      * The rename moves the ENTITY id and leaves the COLLECTION id alone. So
+        `input_boolean/list` keeps reporting the slugified name for ever, and
+        a guard comparing that against the wanted object_id can never match.
+
+    Deciding from `input_boolean/list` is what made this non-idempotent: the
+    guard missed on every run after the first, so each one created another
+    duplicate helper and then died renaming it onto a taken entity_id --
+    taking `tag_entities` down with it, which is what puts the
+    exclude-average label on the group sensors.
+
+    So: decide from the entity registry, which is what the dashboard actually
+    references, and find the new helper by its unique_id -- the one value
+    that survives the rename.
+    """
+    registry = ws([{"type": "config/entity_registry/list"}])[0]
+    existing = {entry["entity_id"] for entry in registry}
+
+    for object_id, name, icon in TOGGLES:
+        entity_id = f"input_boolean.{object_id}"
+        if entity_id in existing:
+            print(f"  toggle {entity_id} already exists")
             continue
-        print(f"  toggle {object_id} -> create")
-        if apply:
-            ws([{"type": "input_boolean/create", "name": name, "icon": icon}])
+        print(f"  toggle {entity_id} -> create")
+        if not apply:
+            continue
+
+        created = ws([{"type": "input_boolean/create", "name": name, "icon": icon}])[0]
+        # NOT f"input_boolean.{created['id']}": the entity_id comes from the
+        # slugified name and the collection id from the same slug only while
+        # that slug is free. Once it is taken the two diverge (collection
+        # ..._2, entity ...) and guessing renames the wrong entity.
+        actual = _input_boolean_entity(
+            ws([{"type": "config/entity_registry/list"}])[0], created["id"]
+        )
+        if actual is None:
+            raise RuntimeError(
+                f"created input_boolean {created['id']!r} but it never reached "
+                "the entity registry"
+            )
+        if actual != entity_id:
+            ws([{
+                "type": "config/entity_registry/update",
+                "entity_id": actual,
+                "new_entity_id": entity_id,
+            }])
+            print(f"    renamed {actual} -> {entity_id}")
 
 
 def tag_entities(areas, per_area, apply: bool) -> None:
@@ -457,11 +514,10 @@ def main() -> None:
         entry_id = entry["entry_id"] if entry else create_group(title, members)
         set_group_options(entry_id, members)
 
-    if args.apply:
-        print("\nhelpers:")
-        ensure_toggles(True)
-        tag_entities(areas, per_area, True)
-    else:
+    print("\nhelpers:")
+    ensure_toggles(args.apply)
+    tag_entities(areas, per_area, args.apply)
+    if not args.apply:
         print("\n(dry run — nothing changed; pass --apply)")
 
     if args.push:
