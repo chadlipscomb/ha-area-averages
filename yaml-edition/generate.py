@@ -467,10 +467,15 @@ def room_section(area_id, area_name, entity, excluded):
     # re-filters on every state change, so a sensor added to this area shows
     # up here even though the dashboard config itself is a snapshot.
     def member_list(only_offline):
-        include = [{"area": area_name, "device_class": DEVICE_CLASS}]
+        # device_class is NOT a top-level auto-entities rule -- it has to be
+        # nested under `attributes`. A top-level one fails the whole card with
+        # 'Unknown rule "device_class" in include filter 0', which is how every
+        # member list on this dashboard rendered as a Configuration error.
+        dc = {"attributes": {"device_class": DEVICE_CLASS}}
+        include = [{"area": area_name, **dc}]
         if only_offline:
             include = [
-                {"area": area_name, "device_class": DEVICE_CLASS, "state": s}
+                {"area": area_name, **dc, "state": s}
                 for s in ("unavailable", "unknown")
             ]
         toggle = OFFLINE_TOGGLE if only_offline else SENSORS_TOGGLE
