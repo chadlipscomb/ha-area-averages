@@ -7,7 +7,7 @@
  * Why this exists: tools/test_strategy.mjs only substring-matches the emitted
  * templates, so an unbalanced {% endif %} in a colour ladder would pass every
  * structural assertion and then render an error string on every hero card. The
- * mushroom path is the live path on this system, which puts essentially all of
+ * mushroom path is the usual live path, which puts essentially all of
  * the dashboard's colour and secondary-text logic behind Jinja that the node
  * harness cannot evaluate. This closes that gap.
  *
@@ -24,10 +24,10 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, "..");
 const STRATEGY = path.join(REPO, "www", "area_averages_strategy.js");
 const FIXTURE = path.join(HERE, "fixture.json");
-const BASE = "https://homeassistant.local:8123";
-const TOKEN = fs
-  .readFileSync(path.join(os.homedir(), ".config", "ha-token"), "utf8")
-  .trim();
+const BASE = (process.env.HA_URL || "https://homeassistant.local:8123").replace(/\/$/, "");
+const TOKEN =
+  process.env.HA_TOKEN ||
+  fs.readFileSync(path.join(os.homedir(), ".config", "ha-token"), "utf8").trim();
 
 /* Card options whose values are Jinja, keyed by how HA treats them. */
 const TEMPLATE_KEYS = [

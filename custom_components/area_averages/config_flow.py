@@ -11,7 +11,6 @@ from __future__ import annotations
 from typing import Any
 
 import voluptuous as vol
-
 from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
@@ -61,6 +60,7 @@ from .const import (
     DEFAULT_EXCLUDE_LABEL,
     DEFAULT_STALE_HOURS,
     DEFAULT_TREND_MINUTES,
+    DOCS_URL,
     DOMAIN,
     SOURCE_USER,
     SUBENTRY_TYPE,
@@ -128,6 +128,7 @@ class AreaAveragesConfigFlow(ConfigFlow, domain=DOMAIN):
                     ): _device_class_selector(multiple=True),
                 }
             ),
+            description_placeholders={"docs_url": DOCS_URL},
         )
 
     @classmethod

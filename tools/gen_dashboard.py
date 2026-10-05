@@ -6,7 +6,7 @@ Default (--push) wires the dashboard to the **custom strategy**
 content-hash version (bump-on-change), makes sure the dashboard and the
 exclude label exist, and saves the two-line strategy config. The strategy
 then regenerates every section live on each dashboard load — new sensors,
-new areas, exclusions, offline-hiding. Ship the JS first via ../deploy.sh.
+new areas, exclusions, offline-hiding. Copy the JS to <config>/www/ first.
 
 `--push-static` pushes the old generated snapshot instead (emergency
 fallback if the strategy JS misbehaves; no offline-hiding, goes stale).
@@ -16,21 +16,25 @@ Usage:
   python3 gen_dashboard.py --push     # strategy mode (the normal path)
   python3 gen_dashboard.py --push-static
 
-Needs `websockets` for pushing. Token comes from ~/.config/ha-token.
+Needs `websockets` for pushing. Set HA_URL and HA_TOKEN
+(or put the token in ~/.config/ha-token).
 """
 
 from __future__ import annotations
 
 import asyncio
 import json
+import os
 import pathlib
 import ssl
 import sys
 import urllib.request
 
-BASE = "https://homeassistant.local:8123"
-WS_URL = "wss://homeassistant.local:8123/api/websocket"
-TOKEN = pathlib.Path("~/.config/ha-token").expanduser().read_text().strip()
+BASE = os.environ.get("HA_URL", "https://homeassistant.local:8123").rstrip("/")
+WS_URL = BASE.replace("http", "ws", 1) + "/api/websocket"
+TOKEN = os.environ.get("HA_TOKEN") or (
+    pathlib.Path("~/.config/ha-token").expanduser().read_text().strip()
+)
 
 DASHBOARD_URL_PATH = "room-temperatures"
 DASHBOARD_TITLE = "Area Temperatures"

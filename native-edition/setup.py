@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 import ssl
 import sys
@@ -37,8 +38,10 @@ REPO = HERE.parent
 sys.path.insert(0, str(REPO / "tools"))
 from make_fixture import _get as rest, ws  # noqa: E402
 
-BASE = "https://homeassistant.local:8123"
-TOKEN = pathlib.Path("~/.config/ha-token").expanduser().read_text().strip()
+BASE = os.environ.get("HA_URL", "https://homeassistant.local:8123").rstrip("/")
+TOKEN = os.environ.get("HA_TOKEN") or (
+    pathlib.Path("~/.config/ha-token").expanduser().read_text().strip()
+)
 
 DEVICE_CLASS = "temperature"
 EXCLUDE_LABEL = "exclude_average"

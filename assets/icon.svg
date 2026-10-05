@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- House -->
+  <path d="M256 52 L462 236 H418 V452 H94 V236 H50 Z"
+        fill="#18BCF2" stroke="#18BCF2" stroke-width="28" stroke-linejoin="round"/>
+  <!-- Readings: one bar per sensor -->
+  <g fill="#FFFFFF">
+    <rect x="146" y="300" width="56" height="140" rx="28"/>
+    <rect x="228" y="218" width="56" height="222" rx="28"/>
+    <rect x="310" y="262" width="56" height="178" rx="28"/>
+  </g>
+  <!-- The average -->
+  <line x1="122" y1="282" x2="390" y2="282" stroke="#FF9800" stroke-width="22" stroke-linecap="round"/>
+</svg>

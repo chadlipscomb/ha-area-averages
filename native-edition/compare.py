@@ -14,13 +14,16 @@ Exit code 1 if any mean disagrees by more than 0.01. Stdlib only.
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import ssl
 import sys
 import urllib.request
 
-BASE = "https://homeassistant.local:8123"
-TOKEN = pathlib.Path("~/.config/ha-token").expanduser().read_text().strip()
+BASE = os.environ.get("HA_URL", "https://homeassistant.local:8123").rstrip("/")
+TOKEN = os.environ.get("HA_TOKEN") or (
+    pathlib.Path("~/.config/ha-token").expanduser().read_text().strip()
+)
 SUFFIX = "_native_average_temperature"
 
 

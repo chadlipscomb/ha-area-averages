@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Area Averages",
-        "description": "Averages are added one at a time, so you choose which areas get one and what they measure. Auto-discovery can fill the list in for you from the areas you already have.",
+        "description": "Area Averages gives each area one sensor that averages the sensors in it, and reports which of them are offline, stale or low on battery.\n\nYou add averages one at a time and choose which areas get one and what they measure. Auto-discovery can fill the list in for you from the areas you already have.\n\n[Documentation]({docs_url})",
         "data": {
           "auto_discover": "Discover averages automatically",
           "auto_discover_classes": "Discover these sensor types"
@@ -35,10 +35,10 @@
         "data_description": {
           "auto_discover": "Creates an average for every area that has sensors of the types below, and for new areas as they appear. Turning this off leaves the averages you already have; nothing is ever deleted automatically.",
           "auto_discover_classes": "Only used while auto-discovery is on. An average you add by hand can be of any supported type.",
-          "stale_hours": "Measured from a member's last numeric report, not from its last change — a sensor repeating the same value is not stale. Stale members are dropped from the average. A member that has never reported a number is listed as offline instead of stale, because there is no report to age.",
+          "stale_hours": "Measured from a member's last numeric report, not from its last change, so a sensor repeating the same value is not stale. Stale members are dropped from the average. A member that has never reported a number is listed as offline instead of stale, because there is no report to age.",
           "battery_threshold": "Members whose device has a battery level at or below this are listed in the issue attribute. Binary low-battery sensors are always reported.",
           "trend_minutes": "How far back the rising / falling / steady reading looks. Held in memory only, so the trend reads unknown for the first quarter hour after a restart.",
-          "exclude_label": "Used by averages in exclude mode. The label applies to an entity OR to its device — labelling the device excludes every measurement that device reports. Excluded sensors stay visible on the dashboard under \"Not in average\"; they are simply not counted.",
+          "exclude_label": "Used by averages in exclude mode. The label applies to an entity or to its device. Labelling the device excludes every measurement that device reports. Excluded sensors stay visible on the dashboard under \"Not in average\"; they are simply not counted.",
           "ignored": "These were discovered once and then deleted, so auto-discovery leaves them alone. Untick one to let it come back."
         }
       }
@@ -55,7 +55,7 @@
       "step": {
         "user": {
           "title": "Which average?",
-          "description": "One average per area per sensor type — a Master Bathroom humidity average and a Master Bathroom temperature average are two separate entries.",
+          "description": "Each area gets one average per sensor type, so a bathroom humidity average and a bathroom temperature average are two separate entries.",
           "data": {
             "area_id": "Area",
             "device_class": "What it measures"
@@ -81,7 +81,7 @@
         },
         "reconfigure": {
           "title": "Which sensors go in?",
-          "description": "{average}. To move this average to another area, or change what it measures, delete it and add a new one — those two things are what the average is.",
+          "description": "{average}. To move this average to another area, or change what it measures, delete it and add a new one. Those two things define the average.",
           "data": {
             "mode": "How members are chosen",
             "include_entities": "Sensors to include",

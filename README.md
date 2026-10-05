@@ -1,308 +1,189 @@
-# ha-area-averages
+<p align="center">
+  <img src="assets/icon.png" alt="Area Averages icon" width="128">
+</p>
 
-Custom Home Assistant integration (`area_averages`) that maintains one robust
-**"Area Average"** sensor per HA Area, plus a **custom dashboard strategy** that
-regenerates the whole "Area Temperatures" dashboard from live state on every
-page load.
+# Area Averages
 
-The integration is pure HA core APIs — no HACS, no external Python deps
-(`requirements: []`). The *dashboard* may use already-installed HACS cards, but
-every card it emits has a core-only equivalent and it degrades to a complete,
-correctly coloured core-only dashboard if those cards are missing.
+A Home Assistant integration that gives each area one sensor averaging the
+sensors in it, and tells you which of those sensors are offline, stale or low
+on battery.
 
-Config entry created 2026-08-12.
-Integration `0.4.0`, strategy `VERSION 3.0.0`.
+If a room has six temperature sensors and two of them die, you still get a
+temperature from the other four, along with `4 of 6 sensors` and the names of
+the two that stopped reporting.
 
-## Tests
+<!-- Screenshot: the integration page in Settings → Devices & Services, showing
+     one row per average (subentries) with their gear icons. -->
 
-```
-uv venv --python 3.14 .venv && uv pip install pytest-homeassistant-custom-component
-.venv/bin/python -m pytest
-```
+## Features
 
-`tests/` is pure — it imports `calc.py` with no Home Assistant and covers what
-the two membership modes mean. `tests/integration/` runs a real Home Assistant
-and covers the flows, the subentry lifecycle, auto-discovery and the 1 → 2
-migration.
+- One average per area and sensor type: temperature, humidity, pressure, CO2,
+  illuminance or PM2.5.
+- Works out membership from the area. Move a sensor into a room and it joins
+  that room's average within a couple of seconds.
+- Leaves out offline and stale sensors, and lists them (plus low batteries) in
+  the sensor's attributes.
+- Converts mixed units (°C and °F, for example) before averaging.
+- Optional auto-discovery creates an average for every area that has matching
+  sensors.
+- Also reports minimum, maximum, spread and a rising/falling trend.
+- No dependencies outside Home Assistant core.
+- An optional dashboard strategy builds a full "Area Temperatures" dashboard
+  from these sensors.
 
-## Three implementations, one calculation
+## Installation
 
-| | `custom_components/` | `yaml-edition/` | `native-edition/` |
-|---|---|---|---|
-| Built from | a custom integration | template sensors + a Jinja macro | built-in Group helpers |
-| Dashboard | custom strategy (JS) | stored config + auto-entities | **core cards only** |
-| Auto-discovers by Area | yes, ~2 s | yes, ~1 min | no — static list |
-| `issue` / battery / staleness | yes | yes | **no** |
-| Per-area config, include mode | yes | no | no |
-| Needs custom components | yes | no | no |
-| Needs HACS cards | dashboard only | dashboard only | **no** |
-| Lives at | `/room-temperatures` | `/yaml-temperatures` | `/native-temperatures` |
+Requires Home Assistant 2026.3 or newer.
 
-All three run side by side and agree on every mean. Each edition has a
-`compare.py` that checks itself against the integration — two independent
-implementations of one calculation are worth having precisely because they can
-be diffed. Run them after changing anything.
+### HACS
 
-The rest of this file describes the integration; each edition has its own
-README.
+1. In HACS, open the menu → **Custom repositories**.
+2. Add `https://github.com/chadlipscomb/ha-area-averages` as an
+   **Integration**.
+3. Install **Area Averages** and restart Home Assistant.
 
-## The health model (read this first)
+### Manual
 
-Every member of an average lands in **exactly one** of three buckets, and the
-invariant `len(offline) + len(stale) + reporting == member_count` always holds:
+Copy `custom_components/area_averages` into your Home Assistant
+`config/custom_components/` folder and restart.
 
-| Bucket | Meaning | In the mean? |
+## Setup
+
+Go to **Settings → Devices & Services → Add integration** and pick
+**Area Averages**. Setup asks whether to discover averages automatically and,
+if so, for which sensor types.
+
+<!-- Screenshot: the setup dialog (auto-discovery toggle + sensor types). -->
+
+To add an average by hand, open the integration and choose **Add an average**.
+Pick an area and what it measures. The next step decides which sensors go in:
+
+| Mode | Members |
+|---|---|
+| Everything in the area (default) | Every sensor of that type in the area, except ones carrying the exclude label |
+| Only these sensors | The sensors you pick, plus anything in the area carrying the include label you choose |
+
+<!-- Screenshot: the "Which sensors go in?" step of the subentry flow. -->
+
+To keep a sensor out of an average, add the `exclude-average` label to the
+sensor or to its device. Diagnostic and disabled entities are always left out.
+
+The new sensor is named `sensor.<area>_average_<type>` and is assigned to its
+area, so it shows up on area cards and to voice assistants.
+
+## How a sensor is counted
+
+Every member is in exactly one of three states:
+
+| State | Meaning | Counted in the average? |
 |---|---|---|
-| **offline** | No state object, `unavailable`/`unknown`, non-numeric, or a unit that cannot be converted into the average's unit. No time window — offline the instant it goes dark. | no |
-| **stale** | Holds a convertible number, but its last actual report is older than `stale_hours`. | **no** (dropped since 0.2.0) |
-| **reporting** | Value is actually inside the mean. | yes |
+| reporting | Has a usable number | yes |
+| stale | Has a number, but its last report is older than the stale limit (24 h by default) | no |
+| offline | Unavailable, unknown, not a number, or in a unit that can't be converted | no |
 
-A member that has *never* produced a number is **offline**, not stale — there is
-nothing to wait for. Last-report times are persisted via restore-state, so an HA
-restart does not reset the staleness clock.
-
-**State** = mean of the reporting members, in the HA system unit (°F here);
-mixed °C/°F members are converted first. `unknown` only when nothing reports.
-
-> Note: `reporting` used to include stale members, and `issue` used to omit
-> offline ones. Both changed in 0.2.0. Names and shapes are unchanged, but the
-> values moved and the Status card got much louder — that is the point, it was
-> previously claiming health it did not have.
+The average's state is the mean of the reporting members, in your system's
+unit. It is `unknown` only when nothing reports. Last-report times survive a
+restart, so a restart doesn't reset the stale clock.
 
 ## Attributes
 
-| Attribute | Shape | Meaning |
-|---|---|---|
-| `offline` | `list[str]` | Members contributing nothing right now (see above). |
-| `stale` | `list[str]` | Numeric but older than `stale_hours`; excluded from the mean. |
-| `reporting` | `int` | Members actually inside the mean. |
-| `member_count` | `int` | `len(sensors)`. |
-| `summary` | `str` | One phrase for a tile secondary: `"9 sensors"`, `"2 of 9 sensors"`, `"1 sensor"`, `"no sensors reporting"`. Never null. |
-| `healthy` | `bool` | `reporting > 0 and not issues`. A room with nothing reporting is never healthy. |
-| `issue` / `issues` | `str \| null` / `list[str]` | Offline rows, then stale, then battery: `"<Name>: offline"`, `"<Name>: no data for N h"`, `"<Name>: battery N%"`, `"<Name>: low battery"`. `<Name>` falls back to the entity_id when the friendly name is generic ("Temperature") or under 4 chars. `issue` is the `"; "`-joined string. |
-| `minimum` / `maximum` | `float \| null` | Smallest / largest value in the mean, average's unit, 2 dp. Null when nothing reports. |
-| `spread` | `float \| null` | `maximum - minimum`. Null when fewer than 2 report. |
-| `trend` | `str` | `rising` / `falling` / `steady` / `unknown`. In-memory only, never from the recorder — so it is honestly `unknown` for ~15 min after every restart. |
-| `trend_rate` | `float \| null` | Signed native units per hour, 2 dp. Null while `unknown`. |
-| `sensors` / `excluded` | `list[str]` | Members / entities carrying the exclude label. |
-| `low_battery` | `list[str]` | Battery entities under the threshold. |
-
-`sensors`, `excluded` and `offline` are excluded from the recorder.
-
-## One subentry per average
-
-Since 0.4.0 an average is a **config subentry**: its own row on the integration
-page with its own gear icon, the way Magic Areas does it. Adding one asks two
-questions — which area, and what it measures — so a room can have a temperature
-average, a humidity average, both or neither.
-
-The area and the device class are what the average *is*: together they set the
-`unique_id`, so the gear icon edits membership only. To move an average to
-another area, delete it and add a new one.
-
-**Auto-discovery** (off on a fresh install, on after upgrading from 0.3.x)
-creates a subentry for every area that has sensors of the configured types, and
-for new areas as they appear — so the list fills itself in and every discovered
-average is still a real row you can edit. Deleting one records it as *ignored*
-rather than discovering it again on the next registry change; untick it under
-"Averages auto-discovery must not re-create" to let it come back. Nothing is
-ever deleted automatically: turning discovery off leaves what it made.
-
-## Membership
-
-Each average picks its members one of two ways.
-
-| Mode | Members | `excluded` |
-|---|---|---|
-| **Everything in the area, minus the excluded** (default) | every sensor of that device class whose entity (or device) sits in the area | anything carrying the exclude label |
-| **Only these sensors** | exactly the entities picked, plus anything in the area carrying that average's include label | every other sensor of that type in the area |
-
-Exclude mode follows the entity registry, so a sensor moved into the area joins
-within seconds — no restart. Include mode is a fixed list that nothing can join
-on its own, which is the point of it; the include label is the escape hatch when
-you would rather tag sensors than edit a list.
-
-Diagnostic/config-category entities (Zigbee LQI temps, radio chip temps, …) and
-disabled entities are never members and are **not** listed in `excluded` either
-— they were never on offer, so the dashboard's "Not in average" list stays
-about sensors you chose to leave out. The one exception is an entity you picked
-by hand in include mode: if you went and chose it, you meant it.
-
-**Exclusions**: put the `exclude-average` label on an entity *or its device* and
-it leaves the average within seconds, listed in `excluded`. If the configured
-label matches nothing, the integration logs a **warning** instead of silently
-excluding nothing.
-
-An average whose area has no matching sensors is **kept**, reporting `unknown`
-and `no sensors reporting` — it is explicit configuration now, so it does not
-vanish on its own.
-
-Each average is auto-assigned to its area, so it appears on area cards and to
-voice assistants.
-
-## Entities the integration owns
-
-- `sensor.<area>_average_<device_class>` — one per area per configured class.
-- `switch.area_averages_show_offline` — the dashboard's reveal control
-  (`RestoreEntity`, category CONFIG, default off). The integration owns it so a
-  fresh install is not missing a hand-made helper. The old
-  `input_boolean.show_offline_sensors` still works as a fallback and can be
-  deleted.
-
-Deleting an average removes its entity from the registry rather than
-orphaning it. One that comes back later with the same `unique_id` reclaims its
-entity_id and history.
-
-## Configuration
-
-**Per average** — the gear icon on its row:
-
-| Option | Notes |
+| Attribute | Meaning |
 |---|---|
-| How members are chosen | exclude (default) or include; see Membership |
-| Sensors to include | include mode only; the picker offers that area's sensors of that type |
-| Label that includes a sensor | include mode only; anything in the area carrying it joins |
+| `summary` | Short coverage text: `9 sensors`, `2 of 9 sensors`, `no sensors reporting` |
+| `healthy` | `true` when something reports and there are no issues |
+| `issue` / `issues` | Offline, stale and low-battery problems as text, e.g. `Kitchen Thermometer: offline` |
+| `reporting` / `member_count` | Members in the mean / all members |
+| `offline` / `stale` / `low_battery` | Entity IDs in each group |
+| `minimum` / `maximum` / `spread` | Range of the values in the mean |
+| `trend` / `trend_rate` | `rising`, `falling`, `steady` or `unknown`, and the rate per hour. Kept in memory, so it reads `unknown` for about 15 minutes after a restart |
+| `sensors` / `excluded` | Members, and sensors left out by label or include mode |
 
-**Shared by every average** — Settings → Devices & Services → Area Averages →
-Configure:
+<!-- Screenshot: the average's more-info dialog with its attributes expanded. -->
 
-| Option | Default | Notes |
-|---|---|---|
-| Discover averages automatically | off on a fresh install | on after migrating from 0.3.x |
-| Discover these sensor types | `temperature` | multi-select: humidity, pressure, CO2, illuminance, PM2.5. Only used while discovery is on — an average added by hand can be any supported type |
-| Stale after | 24 h | measured from the last *numeric* report |
-| Low battery threshold | 20 % | |
-| Trend window | 120 min | 15–720; bounds the in-memory sample deque |
-| Exclude label | `exclude-average` | rendered as a **label picker**, so it cannot be a typo |
-| Averages auto-discovery must not re-create | empty | discovered averages you deleted; untick one to let it back |
+## Options
 
-Changing a shared setting reloads the integration. Adding, editing or deleting
-a *single* average does not — the other averages keep their in-memory trend
-history, which a reload would throw away.
+These apply to every average. Open the integration and choose **Configure**.
 
-Every supported device class has a fixed unit (°F/%/psi/ppm/lx/µg/m³) — a
-MEASUREMENT sensor is never created unitless, which would make HA discard its
-long-term statistics when a unit appeared later.
-
-## The dashboard
-
-`/room-temperatures` ("Area Temperatures"). The saved lovelace config is only:
-
-```json
-{"strategy": {"type": "custom:area-temperatures"}}
-```
-
-`www/area_averages_strategy.js` regenerates everything on each load — two views.
-
-**Rooms** is a status card, then **one section per area**. Each section is:
-
-| | |
+| Option | Default |
 |---|---|
-| heading | area name + its registry icon |
-| reading | the temperature at 34 px, on the 65/68/78/84 ladder with a red `mdi:fire` badge above 84. Small line underneath states coverage: `4 of 6 sensors` |
-| `[N sensors]` | reveals every member of that average |
-| `[N offline]` | reveals only the dark ones; present only while that room has one |
-| members | tiles, hidden until a button is pressed |
-| excluded | greyed `mdi:sigma-lower` tiles, behind the sensors button |
+| Discover averages automatically | off |
+| Sensor types to discover | temperature |
+| Stale after | 24 hours |
+| Low battery threshold | 20 % |
+| Trend window | 120 minutes |
+| Exclude label | `exclude-average` |
+| Averages auto-discovery must not re-create | none |
 
-The temperature is the **primary** line, not the secondary — it is the reason
-the page exists, so nothing else competes with it for size. Fridge is judged on
-its own 45/50 ladder; 3D Printer, Bench, Outside and Weather carry no comfort
-semantics at all.
+If you delete an average that auto-discovery made, it won't come back. Untick
+it in the last option to allow it again. Turning discovery off keeps the
+averages it already created.
 
-**Trends** is core `statistics-graph` only: a 7-day overview of every room
-average, then min/mean/max per room. All history lives here — the overview
-carries no graphs, because eleven of them made the temperatures unreadable.
+## Dashboard (optional)
 
-### Liquid Glass
+`www/area_averages_strategy.js` is a dashboard strategy that builds the whole
+dashboard every time it loads: one section per area with the temperature in
+large type, buttons that reveal the room's sensors or only its offline ones,
+and a Trends view with statistics graphs.
 
-Every card is a translucent, blurred pane lifted off the page by a soft shadow
-and edged with a specular highlight along its top rim
-(`inset 0 1px 0`) — the cue that makes glass read as glass rather than as a
-flat translucent rectangle. Readings sit at 22 px radius, buttons are full
-pills, member tiles are tighter at 16 px, and each pane lifts 1 px on hover.
+<!-- Screenshot: the Rooms view, a few areas with temperatures and buttons. -->
+<!-- Screenshot: one room with its sensors revealed, including an offline one. -->
+<!-- Screenshot: the Trends view. -->
 
-It is defined entirely in `color-mix()` against HA's own theme variables, so
-one definition tracks light and dark without hardcoding a palette — the pane
-borrows `--card-background-color` and thins it, and takes its rim from
-`--primary-text-color`. The harness asserts no six-digit hex ever reaches the
-CSS.
+1. Copy `www/area_averages_strategy.js` to `config/www/`.
+2. Add it as a resource: **Settings → Dashboards → ⋮ → Resources**, URL
+   `/local/area_averages_strategy.js`, type **JavaScript module**.
+3. Create a new dashboard, open its raw configuration editor and replace
+   everything with:
 
-Glass needs **card-mod**, which is probed at load like any other custom card.
-Without it every card renders as an ordinary HA card, same structure, same
-colours — `glass: false` does the same thing deliberately, and the harness
-asserts that turning it off changes styling *only*, never structure.
+   ```yaml
+   strategy:
+     type: custom:area-temperatures
+   ```
 
-### Options
+Don't use **Take control** on this dashboard. It freezes the generated cards
+into a static copy.
+
+The dashboard works with core cards alone. If
+[Mushroom](https://github.com/piitaya/lovelace-mushroom) and
+[card-mod](https://github.com/thomasloven/lovelace-card-mod) are installed it
+uses them for a frosted-glass look. Strategy options go under `strategy:`:
 
 | Option | Default | Effect |
 |---|---|---|
-| `glass` | `true` | `false` for flat HA cards (also the automatic result when card-mod is missing) |
-| `detail` | `"compact"` | `"full"` adds ` · 77.9–84.9 · ↓` to the small line |
-| `cards` | `"auto"` | `"native"` forces core cards, `"mushroom"` skips the probe |
-| `stats_days` | `7` | Trends window |
-| `probe_timeout_ms` | `1500` | how long to wait for custom cards to define |
-| `areas` | `{}` | `{"<area_id>": {"group": "inside\|outdoors\|equipment", "band": "default\|fridge\|none"}}` |
+| `glass` | `true` | `false` gives plain HA cards |
+| `detail` | `compact` | `full` adds the range and trend under each temperature |
+| `cards` | `auto` | `native` forces core cards, `mushroom` skips the check |
+| `stats_days` | `7` | Length of the Trends graphs |
+| `areas` | `{}` | Per area: `group` (`inside`, `outdoors`, `equipment`) and `band` (`default`, `fridge`, `none`) |
 
-**Do not "take control"** of the dashboard in the UI editor — that freezes the
-strategy into a static snapshot. `gen_dashboard.py --push` restores it.
+The temperature colours use comfort bands in °F (65 / 68 / 78 / 84).
 
-## Reveal controls are never gated on generate-time state
+## Without the integration
 
-`generate()` runs **once per page load**. Anything decided from a snapshot of
-`hass.states` at that moment freezes until the next reload, so the reveal tile
-and its heading badges are emitted for *every* room that has members and gate
-themselves with live `visibility` conditions instead. Gating their emission on
-"does this room have an offline member right now" produced a dead end: load the
-page while a room is healthy, let a member die, and its tile hid itself with no
-control anywhere to bring it back. Kitchen hit this on every restart — its MQTT
-sensor is non-retained and comes back `unknown`.
+Two other versions of the same idea live in this repo, for setups that can't
+run custom components:
 
-The same rule governs the per-room offline badges on the Rooms view: each badge
-watches only its **own** room's members. A single "worst room" badge with a
-dashboard-wide visibility OR keeps naming the room it picked at generate time
-while pointing at a different room's outage.
+- [`yaml-edition/`](yaml-edition/) uses template sensors and a Jinja macro. It
+  has most of the health reporting but needs a generator re-run for new areas.
+- [`native-edition/`](native-edition/) uses only built-in Group helpers and
+  core cards. It gives you the average but no health reporting.
 
-## Notes / quirks
+## Development
 
-- HA is at `https://homeassistant.local:8123` (LAN IP; the external hostname 401s from
-  LAN), token at `~/.config/ha-token`. Always `curl -sk`.
-- Members that are offline across two consecutive restarts can carry a
-  `last_numeric` stamp from a restart instant (13 do today, all at 03:05–03:09
-  on 2026-08-13). A pre-0.2.1 seeding bug wrote them and restore-state persisted
-  them. Harmless — `offline` beats `stale` in classification, so the value is
-  never read, and it is overwritten the moment the sensor reports. Deliberately
-  **not** cleaned up on restore: dropping stamps for currently-non-numeric
-  members would also drop them during the restart window when healthy sensors
-  are briefly unavailable, destroying the staleness clocks restore-state exists
-  to preserve.
-- `deploy.sh` sets `COPYFILE_DISABLE=1`; without it macOS tar writes
-  AppleDouble `._sensor.py` junk into the HA config dir on every deploy.
-- The config flow asks two questions (auto-discovery on/off, and which types),
-  so adding it headlessly takes two POSTs to
-  `/api/config/config_entries/flow` — the second with
-  `{"auto_discover": false, "auto_discover_classes": ["temperature"]}`.
-- Upgrading from 0.3.x runs `async_migrate_entry`: every average already in the
-  entity registry is adopted as a subentry with the same `unique_id`, entity_id
-  and history, and auto-discovery is turned on because that is what 0.3.x did.
-  An average whose area no longer exists cannot be matched and is pruned.
-- Non-retained MQTT members read `unknown` for a minute or two after every HA
-  restart, so their room briefly shows "no sensors reporting". It self-heals on
-  the next publish; this is honest, not a bug.
-- The label registry stores `exclude-average` as label_id `exclude_average`;
-  both spellings resolve.
-- **Known double-counting**: `sensor.derry_temperature` /
-  `sensor.lr_plant_derry_temperature` are the same plant, as are the two Otter
-  and two Hippocrates sensors. Label one of each pair `exclude-average`.
-  Deliberately not solved in code — reliable detection needs value-series
-  correlation, and de-duplicating by `device_id` is provably wrong here
-  (`esp32_thermal` ambient vs object share a device and measure different
-  things).
-- The Weather average still mixes dew point and feels-like with real temps;
-  those are a labelling decision, not a code one. It is at least out of the
-  comfort-banded group now.
-- `sensor.altai_*_target_temperature` (setpoints), the three
-  `sensor.sensorbox_*_temperature` (documented 5–8 °F high) and
-  `sensor.fridge_t` (fridge cabinet ≠ Kitchen room air) carry the label.
-- `/dashboard-temperatures` is the owner's hand-curated dashboard — a separate
-  artifact, never touched by these tools.
+```sh
+uv venv .venv
+uv pip install pytest-homeassistant-custom-component
+.venv/bin/python -m pytest
+```
+
+`tests/` covers the calculation without Home Assistant. `tests/integration/`
+starts a real Home Assistant and covers setup, subentries, auto-discovery and
+migration from 0.3.x. `node tools/test_strategy.mjs` checks the dashboard
+strategy against `tools/fixture.json`.
+
+The scripts in `tools/` and the two editions talk to a live instance. Point
+them at yours with `HA_URL` and `HA_TOKEN` (a long-lived access token).
+
+## License
+
+[MIT](LICENSE)

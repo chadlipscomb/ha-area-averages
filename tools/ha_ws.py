@@ -5,20 +5,24 @@ sends them in order (auto-assigning ids), prints the JSON list of results.
 Usage:
   echo '[{"type": "config/label_registry/list"}]' | python3 ha_ws.py
 
-Needs the `websockets` package (any venv is fine); the HA token is read
-from ~/.config/ha-token.
+Needs the `websockets` package (any venv is fine); set HA_URL and HA_TOKEN
+(or put the token in ~/.config/ha-token).
 """
 
 import asyncio
 import json
+import os
 import pathlib
 import ssl
 import sys
 
 import websockets
 
-URL = "wss://homeassistant.local:8123/api/websocket"
-TOKEN = pathlib.Path("~/.config/ha-token").expanduser().read_text().strip()
+BASE = os.environ.get("HA_URL", "https://homeassistant.local:8123").rstrip("/")
+URL = BASE.replace("http", "ws", 1) + "/api/websocket"
+TOKEN = os.environ.get("HA_TOKEN") or (
+    pathlib.Path("~/.config/ha-token").expanduser().read_text().strip()
+)
 
 
 async def main() -> None:

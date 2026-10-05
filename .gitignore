@@ -1,3 +1,13 @@
 __pycache__/
 *.pyc
 tools/strategy_output.json
+.DS_Store
+.pytest_cache/
+.ruff_cache/
+.venv/
+node_modules/
+
+# Local deploy scripts and working notes
+/deploy.sh
+/yaml-edition/deploy.sh
+/docs/superpowers/

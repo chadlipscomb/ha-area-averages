@@ -2,6 +2,9 @@
 
 DOMAIN = "area_averages"
 
+#: Shown as a link on the setup form.
+DOCS_URL = "https://github.com/chadlipscomb/ha-area-averages"
+
 #: Config entry version. 1 = global device-class list, averages implied.
 #: 2 = one subentry per average (see __init__.async_migrate_entry).
 CONFIG_VERSION = 2

@@ -5,8 +5,8 @@ node with no browser and no login.
 
 Stdlib only.  REST (/api/states + /api/template) for state, plus a tiny
 built-in websocket client for the three registries, because area icons,
-floors, labels and device names exist nowhere else.  Token from
-~/.config/ha-token.
+floors, labels and device names exist nowhere else.  Set HA_URL and
+HA_TOKEN (or put the token in ~/.config/ha-token).
 
     python3 tools/make_fixture.py                 # refresh the fixture
     python3 tools/make_fixture.py --no-backfill   # only what HA publishes today
@@ -33,16 +33,20 @@ import socket
 import ssl
 import struct
 import sys
+import urllib.parse
 import urllib.request
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "custom_components" / "area_averages"))
 import calc  # noqa: E402  (stdlib-only, no homeassistant imports)
 
-HOST = "homeassistant.local"
-PORT = 8123
-BASE = f"https://{HOST}:{PORT}"
-TOKEN = pathlib.Path("~/.config/ha-token").expanduser().read_text().strip()
+BASE = os.environ.get("HA_URL", "https://homeassistant.local:8123").rstrip("/")
+_URL = urllib.parse.urlsplit(BASE)
+HOST = _URL.hostname
+PORT = _URL.port or 8123
+TOKEN = os.environ.get("HA_TOKEN") or (
+    pathlib.Path("~/.config/ha-token").expanduser().read_text().strip()
+)
 OUT = pathlib.Path(__file__).resolve().parent / "fixture.json"
 
 # Every reveal control: the switches the integration owns plus the legacy

@@ -87,7 +87,7 @@ def normalize_unit(unit: str | None) -> str | None:
 
     NFKC maps U+00B5 MICRO SIGN onto U+03BC GREEK SMALL LETTER MU and the
     superscript digits onto plain ones, so the two spellings of
-    ``µg/m³`` that exist on this system stop being different units.
+    ``µg/m³`` that Home Assistant uses stop being different units.
     Used for COMPARISON ONLY -- the published unit keeps its original
     spelling.
     """
